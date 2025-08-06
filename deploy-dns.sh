@@ -25,7 +25,7 @@ if ! command -v terraform &> /dev/null; then
 fi
 
 # Check for Cloudflare API token
-CLOUDFLARE_API_TOKEN=$(ansible-vault decrypt cloudflare.ansible.vault --output -)
+export CLOUDFLARE_API_TOKEN=$(ansible-vault decrypt cloudflare.ansible.vault --output -)
 if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
     echo "❌ Error: CLOUDFLARE_API_TOKEN environment variable not set"
     echo ""
