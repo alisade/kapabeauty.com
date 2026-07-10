@@ -1,154 +1,91 @@
-# Kapa Beauty Website
+# La Belle Nail Studio
 
-A beautiful Hugo-based static website for Kapa Beauty, built with the PaperMod theme and deployed to GitHub Pages.
+A single-page Hugo website for La Belle Nail Studio -- a link-in-bio landing
+page (Linktree style) combined with a Fresha-style service menu. No theme; the
+whole page is a self-contained custom layout, and all copy lives in one data
+file so content can be edited without touching HTML.
 
-## 🌟 Features
+Deployed to GitHub Pages at [labellenailstudio.com](https://labellenailstudio.com).
 
-- **Modern Design**: Clean, responsive design perfect for a beauty brand
-- **Blog System**: Beauty tips and skincare advice
-- **SEO Optimized**: Built-in SEO features and meta tags
-- **Fast Loading**: Optimized for speed and performance
-- **Mobile Responsive**: Looks great on all devices
-- **Social Media Integration**: Easy social sharing and links
+## Editing content
 
-## 🚀 Quick Start
+Everything you see on the page -- studio name, bio, rating, address, the
+link-in-bio buttons, the service menu (names, descriptions, durations, prices),
+opening hours, and social links -- is defined in a single file:
+
+```
+data/studio.yaml
+```
+
+Edit that file and rebuild. No HTML knowledge required. Key fields:
+
+- `bookingURL` -- where the "Book" buttons point (your Fresha booking link).
+- `links` -- the stack of link-in-bio buttons (set `primary: true` on one).
+- `categories` -- the service menu, grouped by category.
+- `hours` -- opening hours table.
+
+To change the avatar, drop a square image at `static/images/logo.png` and set
+`avatar: "/images/logo.png"` in `data/studio.yaml`.
+
+## Local development
 
 ### Prerequisites
 
-- [Hugo Extended](https://gohugo.io/getting-started/installing/) (v0.148.2 or later)
+- [Hugo Extended](https://gohugo.io/getting-started/installing/) v0.148.2 or later
 - [Git](https://git-scm.com/)
 
-### Local Development
+### Run it
 
-1. Clone the repository:
 ```bash
-git clone https://github.com/[username]/kapabeauty.com.git
+git clone https://github.com/alisade/kapabeauty.com.git
 cd kapabeauty.com
-```
-
-2. Initialize the theme submodule:
-```bash
-git submodule update --init --recursive
-```
-
-3. Start the development server:
-```bash
 hugo server -D
 ```
 
-4. Open your browser to [http://localhost:1313](http://localhost:1313)
+Open [http://localhost:1313](http://localhost:1313). There is no theme
+submodule to initialize -- the site is fully self-contained.
 
-## 📝 Content Management
-
-### Adding Blog Posts
-
-Create new blog posts in the `content/posts/` directory:
-
-```bash
-hugo new content posts/your-post-title.md
-```
-
-### Pages
-
-Main pages are located in the `content/` directory:
-- `_index.md` - Homepage
-- `about.md` - About page
-- `contact.md` - Contact page
-- `shop.md` - Shop page
-
-### Categories
-
-Posts can be categorized using the `categories` frontmatter:
-- `skincare` - Skincare tips and advice
-- `makeup` - Makeup tutorials and tips
-
-## 🎨 Customization
-
-### Theme Configuration
-
-The site uses the [PaperMod](https://github.com/adityatelange/hugo-PaperMod) theme. Configuration is in `hugo.toml`.
-
-### Styling
-
-Custom CSS can be added in the `assets/css/` directory.
-
-### Images
-
-Add images to the `static/` directory. They'll be available at the root of your site.
-
-## 🚢 Deployment
-
-The site automatically deploys to GitHub Pages using GitHub Actions when you push to the main branch.
-
-### Setup GitHub Pages
-
-1. Go to your repository Settings
-2. Navigate to Pages in the sidebar
-3. Set Source to "GitHub Actions"
-4. The workflow will run automatically on push
-
-### Custom Domain
-
-To use a custom domain:
-
-1. Add a `CNAME` file to the `static/` directory with your domain
-2. Configure your DNS to point to GitHub Pages
-
-## 📁 Project Structure
+## Project structure
 
 ```
 kapabeauty.com/
-├── .github/
-│   └── workflows/
-│       └── hugo.yml          # GitHub Actions deployment
-├── archetypes/               # Content templates
-├── assets/                   # SCSS, JS, images for processing
-├── content/                  # Site content
-│   ├── posts/               # Blog posts
-│   ├── _index.md           # Homepage
-│   ├── about.md            # About page
-│   ├── contact.md          # Contact page
-│   └── shop.md             # Shop page
-├── data/                    # Data files
-├── i18n/                    # Internationalization
-├── layouts/                 # Custom layouts
-├── static/                  # Static files (images, favicon, etc.)
-├── themes/                  # Hugo themes
-│   └── PaperMod/           # PaperMod theme (submodule)
-└── hugo.toml               # Site configuration
+├── .github/workflows/hugo.yml    # GitHub Actions: build + deploy to Pages
+├── data/studio.yaml              # ALL editable content lives here
+├── layouts/
+│   ├── index.html                # The landing page (standalone, no theme)
+│   ├── 404.html                  # Branded 404 page
+│   └── partials/svg-icon.html    # Inline icon set
+├── content/_index.md             # Home page stub (metadata only)
+├── static/                       # CNAME, robots.txt, images
+├── terraform/                    # Cloudflare DNS (see below)
+├── deploy-dns.sh                 # One-shot DNS deploy helper
+└── hugo.toml                     # Site configuration
 ```
 
-## 🛠️ Development
+## Deployment
 
-### Adding New Features
+The site auto-deploys to GitHub Pages via GitHub Actions on every push to
+`main` (`.github/workflows/hugo.yml`). No manual build step.
 
-1. Create a new branch for your feature
-2. Make your changes
-3. Test locally with `hugo server -D`
-4. Submit a pull request
+### GitHub Pages setup (one time)
 
-### Theme Updates
+1. Repo Settings -> Pages
+2. Source: "GitHub Actions"
+3. Custom domain: `labellenailstudio.com`, then enable "Enforce HTTPS"
 
-To update the PaperMod theme:
+### Custom domain / DNS
+
+The custom domain is set via `static/CNAME` (published to the site root as
+`CNAME`). DNS is managed in Cloudflare through Terraform:
 
 ```bash
-git submodule update --remote themes/PaperMod
+./deploy-dns.sh
 ```
 
-## 📧 Support
+This decrypts the Cloudflare API token from `cloudflare.ansible.vault`, then
+runs `terraform plan` / `apply` in `terraform/` to create the GitHub Pages A /
+AAAA records for `labellenailstudio.com`. See `terraform/README.md` for details.
 
-For questions or support, please [open an issue](https://github.com/[username]/kapabeauty.com/issues) or contact us at hello@kapabeauty.com.
+## License
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [Hugo](https://gohugo.io/) - Static site generator
-- [PaperMod](https://github.com/adityatelange/hugo-PaperMod) - Hugo theme
-- [GitHub Pages](https://pages.github.com/) - Hosting platform
-
----
-
-**Built with ❤️ for Kapa Beauty**
+MIT -- see [LICENSE](LICENSE).

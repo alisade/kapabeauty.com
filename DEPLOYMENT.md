@@ -1,111 +1,84 @@
-# GitHub Pages Deployment Setup Instructions
+# Deployment Guide
 
-Follow these steps to deploy your Kapa Beauty website to GitHub Pages:
+La Belle Nail Studio is a single-page Hugo site that auto-deploys to GitHub
+Pages. This guide covers the deploy pipeline, the custom domain, and DNS.
 
-## 1. Create GitHub Repository
+## How deploys work
 
-1. Go to [GitHub.com](https://github.com) and create a new repository
-2. Name it `kapabeauty.com` (or any name you prefer)
-3. Make it public (required for GitHub Pages on free accounts)
-4. Do NOT initialize with README, .gitignore, or license (we already have these)
+Every push to the `main` branch triggers the GitHub Actions workflow at
+`.github/workflows/hugo.yml`, which:
 
-## 2. Push Your Code to GitHub
+1. Installs Hugo Extended (pinned to v0.148.2) and Dart Sass
+2. Builds the site with `hugo --gc --minify`
+3. Publishes `./public` to GitHub Pages
+
+There is no manual build or theme submodule step. To ship a change:
 
 ```bash
-# Add your GitHub repository as origin (replace USERNAME with your GitHub username)
-git remote add origin https://github.com/USERNAME/kapabeauty.com.git
-
-# Push your code to GitHub
-git branch -M main
-git push -u origin main
+# edit content (usually data/studio.yaml), then:
+git add -A
+git commit -m "Update services"
+git push
 ```
 
-## 3. Enable GitHub Pages
+The Action rebuilds and redeploys automatically. You can watch it in the
+repository's Actions tab.
 
-1. Go to your repository on GitHub
-2. Click on **Settings** tab
-3. Scroll down to **Pages** in the left sidebar
-4. Under **Source**, select **GitHub Actions**
-5. The workflow will automatically run and deploy your site
+## Preview locally before pushing
 
-## 4. Configure Custom Domain (Optional)
+```bash
+hugo server -D
+# open http://localhost:1313
+```
 
-If you own the domain `kapabeauty.com`:
+## GitHub Pages setup (one time)
 
-1. In your repository **Settings** → **Pages**
-2. Under **Custom domain**, enter `kapabeauty.com`
-3. Check **Enforce HTTPS**
-4. Configure your DNS provider to point to GitHub Pages:
-   - Add a CNAME record pointing `www.kapabeauty.com` to `USERNAME.github.io`
-   - Add A records for `kapabeauty.com` pointing to:
-     - `185.199.108.153`
-     - `185.199.109.153`
-     - `185.199.110.153`
-     - `185.199.111.153`
+1. Repository Settings -> Pages
+2. Under Source, select GitHub Actions
+3. Under Custom domain, enter `labellenailstudio.com`
+4. Enable Enforce HTTPS (available once the domain verifies)
 
-## 5. Monitor Deployment
+The custom domain is committed as `static/CNAME`, which Hugo copies to the site
+root as `CNAME` on every build -- so Pages keeps the custom domain across
+deploys.
 
-1. Go to the **Actions** tab in your repository
-2. You'll see the "Deploy Hugo Site to GitHub Pages" workflow running
-3. Once complete (green checkmark), your site will be live at:
-   - `https://USERNAME.github.io/kapabeauty.com` (default)
-   - `https://kapabeauty.com` (if custom domain is configured)
+## DNS (Cloudflare via Terraform)
 
-## 6. Update Content
+DNS records that point `labellenailstudio.com` at GitHub Pages are managed in
+`terraform/` and applied with the helper script:
 
-To add new blog posts or update content:
+```bash
+./deploy-dns.sh
+```
 
-1. Make changes locally
-2. Test with `hugo server -D`
-3. Commit and push:
-   ```bash
-   git add .
-   git commit -m "Add new blog post"
-   git push
-   ```
-4. GitHub Actions will automatically rebuild and deploy
+The script:
+
+1. Decrypts the Cloudflare API token from `cloudflare.ansible.vault`
+   (via `ansible-vault`) and exports it as `CLOUDFLARE_API_TOKEN`
+2. Runs `terraform init` / `plan` in `terraform/`
+3. Prompts before `terraform apply`
+
+It creates the GitHub Pages A records (185.199.108-111.153) and AAAA records,
+plus the `www` CNAME. The Cloudflare zone name is set in
+`terraform/terraform.tfvars` (`labellenailstudio.com`).
+
+After applying, allow time for DNS propagation, then verify at
+https://www.whatsmydns.net/#A/labellenailstudio.com.
 
 ## Troubleshooting
 
-### If deployment fails:
-1. Check the Actions tab for error messages
-2. Ensure all content files have `draft = false` in frontmatter
-3. Verify the theme submodule is properly committed
+- **Build fails in Actions:** check the Actions tab log. Most failures are a
+  YAML syntax error in `data/studio.yaml` -- validate indentation.
+- **Custom domain reverted:** confirm `static/CNAME` still contains
+  `labellenailstudio.com` (it is republished on every build).
+- **DNS not resolving:** re-run `./deploy-dns.sh` and confirm the records in the
+  Cloudflare dashboard; propagation can take up to 24 hours.
 
-### To update the theme:
-```bash
-git submodule update --remote themes/PaperMod
-git add themes/PaperMod
-git commit -m "Update PaperMod theme"
-git push
-```
+## Before going live
 
-### To add new blog posts:
-```bash
-hugo new content posts/your-new-post.md
-# Edit the file and set draft = false
-git add .
-git commit -m "Add new blog post"
-git push
-```
+The site currently ships with placeholder data. Update these in
+`data/studio.yaml`:
 
-## Features Included
-
-✅ **Responsive Design** - Works on all devices  
-✅ **SEO Optimized** - Meta tags, structured data  
-✅ **Fast Loading** - Optimized images and minified code  
-✅ **Blog System** - Beauty tips and skincare advice  
-✅ **Social Media Integration** - Share buttons and links  
-✅ **Contact Forms** - Ready for integration  
-✅ **Search Functionality** - Built-in site search  
-✅ **Analytics Ready** - Easy Google Analytics setup  
-
-## Next Steps
-
-1. **Content**: Add more blog posts and product information
-2. **Images**: Add your logo and product images to the `static/` folder
-3. **Analytics**: Add your Google Analytics ID to `hugo.toml`
-4. **Contact Form**: Integrate with Formspree, Netlify Forms, or similar
-5. **E-commerce**: Consider integrating with Shopify, WooCommerce, or Snipcart
-
-Your beautiful Kapa Beauty website is ready to go live! 🚀✨
+- `bookingURL` -- your real Fresha booking link (all "Book" buttons use it)
+- Services, prices, `rating` / `reviewCount`, `address`, `phone`, `email`,
+  and `instagram`
