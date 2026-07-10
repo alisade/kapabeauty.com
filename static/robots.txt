@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://labellenailstudio.com/sitemap.xml

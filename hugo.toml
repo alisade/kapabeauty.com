@@ -1,12 +1,14 @@
 baseURL = 'https://labellenailstudio.com'
 languageCode = 'en-us'
 title = 'La Belle Nail Studio'
-theme = 'PaperMod'
 
-enableRobotsTXT = true
+enableRobotsTXT = false
 buildDrafts = false
 buildFuture = false
 buildExpired = false
+
+# Single-page site: no sections, taxonomies, or feeds to render.
+disableKinds = ["taxonomy", "term", "section", "RSS"]
 
 [minify]
   disableXML = true
@@ -14,105 +16,8 @@ buildExpired = false
 
 [params]
   env = "production"
-  title = "La Belle Nail Studio"
-  description = "Discover premium nail care services and expert nail art at La Belle Nail Studio. Transform your nails with our professional manicures, pedicures, and nail art services."
-  keywords = ["nail salon", "nail care", "nail art", "manicure", "pedicure", "gel nails", "nail studio"]
+  description = "Russian & e-file manicures, gel, and custom nail art in Los Angeles, CA. Book your appointment online."
   author = "La Belle Nail Studio"
-  images = ["favicon.ico"]
-  DateFormat = "January 2, 2006"
-  defaultTheme = "light"
-  disableThemeToggle = false
-
-  ShowReadingTime = true
-  ShowShareButtons = true
-  ShowPostNavLinks = true
-  ShowBreadCrumbs = true
-  ShowCodeCopyButtons = false
-  ShowWordCount = true
-  ShowRssButtonInSectionTermList = true
-  UseHugoToc = true
-  disableSpecial1stPost = false
-  disableScrollToTop = false
-  comments = false
-  hidemeta = false
-  hideSummary = false
-  showtoc = false
-  tocopen = false
-
-  [params.assets]
-    favicon = "favicon.ico"
-    favicon16x16 = "favicon-16x16.png"
-    favicon32x32 = "favicon-32x32.png"
-    apple_touch_icon = "apple-touch-icon.png"
-    safari_pinned_tab = "safari-pinned-tab.svg"
-
-  [params.label]
-    text = "La Belle Nail Studio"
-    icon = "favicon.ico"
-    iconHeight = 35
-
-  [params.homeInfoParams]
-    Title = "Welcome to La Belle Nail Studio ✨"
-    Content = "Discover premium nail care services and expert nail art. Transform your nails with our professional manicures, pedicures, and custom nail designs that enhance your natural beauty."
-
-  [[params.socialIcons]]
-    name = "instagram"
-    url = "https://instagram.com/labellenailstudio"
-
-  [[params.socialIcons]]
-    name = "facebook"
-    url = "https://facebook.com/labellenailstudio"
-
-  [[params.socialIcons]]
-    name = "twitter"
-    url = "https://twitter.com/labellenailstudio"
-
-  [[params.socialIcons]]
-    name = "youtube"
-    url = "https://youtube.com/@labellenailstudio"
-
-[menu]
-  [[menu.main]]
-    identifier = "home"
-    name = "Home"
-    url = "/"
-    weight = 1
-
-  [[menu.main]]
-    identifier = "services"
-    name = "Services"
-    url = "/services/"
-    weight = 2
-
-  [[menu.main]]
-    identifier = "nailcare"
-    name = "Nail Care"
-    url = "/categories/nailcare/"
-    weight = 3
-
-  [[menu.main]]
-    identifier = "nailart"
-    name = "Nail Art"
-    url = "/categories/nailart/"
-    weight = 4
-
-  [[menu.main]]
-    identifier = "blog"
-    name = "Nail Tips"
-    url = "/posts/"
-    weight = 5
-
-  [[menu.main]]
-    identifier = "about"
-    name = "About"
-    url = "/about/"
-    weight = 4
-
-  [[menu.main]]
-    identifier = "contact"
-    name = "Contact"
-    url = "/contact/"
-    weight = 5
 
 [markup]
   [markup.goldmark]
@@ -120,4 +25,4 @@ buildExpired = false
       unsafe = true
 
 [outputs]
-  home = ["HTML", "RSS", "JSON"]
+  home = ["HTML"]
