@@ -7,8 +7,13 @@ name: "La Belle Nail Studio"
 tagline: "Premium nail care & artistry"
 bio: "Russian & e-file manicures, gel, and custom nail art in Los Angeles, CA. Book your appointment online."
 
-# Avatar shown at the top. Drop an image at static/images/logo.png (any square
-# image works best). Leave blank to show the studio initials instead.
+# Wide cover banner across the very top (like a Fresha cover photo).
+# Drop a wide image at static/images/banner.jpg and set it below, e.g.
+# banner: "/images/banner.jpg". Leave blank for an elegant gradient banner.
+banner: ""
+
+# Avatar shown at the top, overlapping the banner. Drop an image at
+# static/images/logo.png (square works best). Leave blank for the initials.
 avatar: ""
 initials: "LB"
 
