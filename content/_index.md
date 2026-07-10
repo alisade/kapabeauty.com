@@ -1,39 +1,46 @@
 ---
-title: "Kapa Beauty - Premium Beauty & Skincare"
+title: "La Belle Nail Studio - Professional Nail Care & Art"
 date: 2025-08-06
 draft: false
 ---
 
-# Welcome to Kapa Beauty ✨
+# Welcome to La Belle Nail Studio ✨
 
-**Transform Your Beauty Routine with Premium Products**
+**Transform Your Nails with Professional Care & Artistry**
 
-At Kapa Beauty, we believe that every person deserves to feel confident and beautiful in their own skin. Our carefully curated collection of premium beauty products combines the latest innovations with time-tested ingredients to deliver exceptional results.
+At La Belle Nail Studio, we believe that beautiful nails are an essential part of your personal style. Our expert nail technicians combine the latest techniques with premium products to deliver exceptional nail care services and stunning nail art that reflects your unique personality.
 
 ## What We Offer
 
-### 🌟 Premium Skincare
-Discover our range of scientifically-formulated skincare products designed to address every skin concern. From gentle cleansers to powerful serums, our products work together to reveal your skin's natural radiance.
+### 💅 Professional Manicures
+Experience our signature manicures designed to pamper and perfect your nails. From classic treatments to luxury spa experiences, we provide comprehensive nail care that keeps your hands looking and feeling their best.
 
-### 💄 Professional Makeup
-Explore our collection of high-performance makeup products that enhance your natural beauty. Whether you're going for a natural everyday look or glamorous evening style, we have everything you need.
+### 🦶 Luxurious Pedicures
+Indulge in our relaxing pedicure services that rejuvenate tired feet and perfect your toenails. Our treatments include exfoliation, moisturizing, and precise nail care for the ultimate foot pampering experience.
 
-### 🧴 Wellness & Self-Care
-Beauty goes beyond the surface. Our wellness products are designed to nourish your body and soul, creating a holistic approach to beauty and well-being.
+### 🎨 Custom Nail Art
+Express your creativity with our custom nail art services. Our skilled artists can create anything from elegant French tips to intricate designs, seasonal themes, and trendy nail art that makes a statement.
 
-## Why Choose Kapa Beauty?
+### 💎 Premium Nail Services
+- Gel manicures and pedicures for long-lasting results
+- Acrylic nail extensions and sculpting
+- Nail repair and strengthening treatments
+- Special occasion nail designs
 
-- **Quality Guaranteed**: Every product is carefully selected and tested for quality and effectiveness
-- **Expert Advice**: Our beauty specialists are here to help you find the perfect products for your needs
-- **Sustainable Beauty**: We're committed to environmentally conscious practices
-- **Customer First**: Your satisfaction is our top priority
+## Why Choose La Belle Nail Studio?
 
-## Featured Categories
+- **Expert Technicians**: Our licensed professionals stay current with the latest trends and techniques
+- **Premium Products**: We use only high-quality, professional-grade nail products and tools
+- **Hygiene First**: Strict sanitation protocols ensure a safe and clean environment
+- **Personalized Service**: Every treatment is customized to your preferences and nail health needs
+- **Relaxing Atmosphere**: Enjoy a peaceful, luxurious environment designed for your comfort
 
-- [Skincare](/categories/skincare/) - Cleansers, moisturizers, serums, and treatments
-- [Makeup](/categories/makeup/) - Foundation, lipstick, eyeshadow, and more
-- [Beauty Tips](/posts/) - Expert advice and tutorials
+## Featured Services
+
+- [Nail Care](/categories/nailcare/) - Manicures, pedicures, and nail health treatments
+- [Nail Art](/categories/nailart/) - Custom designs, seasonal art, and creative nail styling
+- [Nail Tips](/posts/) - Expert advice and nail care tutorials
 
 ---
 
-*Ready to start your beauty journey? [Explore our shop](/shop/) or [learn more about us](/about/).*
+*Ready to transform your nails? [Book your appointment](/contact/) or [learn more about our services](/services/).*

@@ -1,140 +1,150 @@
 ---
-title: "Shop Kapa Beauty"
+title: "Our Nail Services"
 date: 2025-08-06
 draft: false
 ---
 
-# Shop Kapa Beauty
+# Our Professional Nail Services
 
-**Discover Our Premium Beauty Collection**
+**Discover Our Complete Range of Nail Care & Art Services**
 
-Welcome to our curated collection of premium beauty products. From skincare essentials to professional makeup, find everything you need to enhance your natural beauty.
+Welcome to La Belle Nail Studio's comprehensive service menu. From classic manicures to intricate nail art, we offer everything you need to achieve beautiful, healthy nails.
 
-## Featured Collections
+## 💅 Manicure Services
 
-### 🌟 New Arrivals
-Discover the latest additions to our beauty collection.
+### Classic Manicure
+Our signature service includes nail shaping, cuticle care, hand massage, and polish application.
+- **Duration**: 45 minutes
+- **Perfect for**: Regular maintenance and classic elegance
 
-*Coming soon - Our shopping platform is currently being developed. Follow us on social media for updates!*
+### Spa Manicure
+Indulgent treatment with exfoliation, extended massage, and premium moisturizing.
+- **Duration**: 60 minutes  
+- **Perfect for**: Special occasions and ultimate relaxation
 
-### 💫 Best Sellers
-Our most loved products, chosen by customers like you.
+### Gel Manicure
+Long-lasting gel polish application with superior shine and chip resistance.
+- **Duration**: 60 minutes
+- **Perfect for**: Busy lifestyles and special events
+- **Lasts**: 2-3 weeks
 
-### 🎁 Gift Sets
-Perfect beauty bundles for yourself or someone special.
+## 🦶 Pedicure Services
 
-## Shop by Category
+### Classic Pedicure
+Complete foot care including soak, exfoliation, nail care, and polish.
+- **Duration**: 60 minutes
+- **Perfect for**: Regular foot maintenance
 
-### Skincare
-Transform your skin with our scientifically-formulated skincare products.
+### Luxury Spa Pedicure
+Premium treatment with extended massage, callus removal, and intensive moisturizing.
+- **Duration**: 75 minutes
+- **Perfect for**: Deep relaxation and foot rejuvenation
 
-**Cleansers & Toners**
-- Gentle daily cleansers for all skin types
-- Exfoliating cleansers for deep pore cleansing
-- Balancing toners and essences
+### Gel Pedicure
+Long-wearing gel polish for beautiful, chip-resistant toe nails.
+- **Duration**: 75 minutes
+- **Perfect for**: Summer months and special occasions
 
-**Moisturizers & Serums**
-- Hydrating day and night moisturizers
-- Anti-aging serums and treatments
-- Targeted solutions for specific skin concerns
+## 🎨 Nail Art Services
 
-**Sun Protection**
-- Broad-spectrum SPF products
-- Lightweight daily protection
-- Specialized sunscreens for sensitive skin
+### Custom Nail Art
+Personalized designs created just for you by our skilled nail artists.
+- **Duration**: 90+ minutes (varies by complexity)
+- **Options**: Hand-painted designs, patterns, seasonal themes
 
-### Makeup
+### Accent Nails
+Subtle art on 1-2 nails to complement your manicure.
+- **Duration**: Additional 15-30 minutes
+- **Perfect for**: First-time nail art or subtle enhancement
 
-**Face**
-- Foundations and concealers
-- Blush and bronzers
-- Highlighting and contouring products
+### Special Occasion Designs
+Coordinated nail art for weddings, holidays, and special events.
+- **Duration**: 90+ minutes
+- **Perfect for**: Bridal parties, holidays, celebrations
 
-**Eyes**
-- Eyeshadow palettes
-- Mascaras and eyeliners
-- Brow products
+## 💎 Premium Services
 
-**Lips**
-- Lipsticks and lip glosses
-- Lip liners and treatments
-- Long-wearing liquid lipsticks
+### Acrylic Extensions
+Full set of acrylic nails for length and strength.
+- **Duration**: 2+ hours
+- **Perfect for**: Length enhancement and durability
 
-### Wellness & Self-Care
+### Nail Repair
+Professional repair for broken or damaged nails.
+- **Duration**: 30 minutes per nail
+- **Perfect for**: Maintaining your manicure investment
 
-**Bath & Body**
-- Luxurious body lotions and oils
-- Aromatherapy bath products
-- Exfoliating body scrubs
+### French Manicure
+Classic or modern French tip application.
+- **Duration**: Additional 15 minutes to any manicure
+- **Perfect for**: Timeless elegance
 
-**Tools & Accessories**
-- Professional makeup brushes
-- Skincare tools and devices
-- Beauty accessories
+## 🌟 Add-On Services
 
-## Shopping Benefits
+### Cuticle Treatment
+Intensive cuticle care and moisturizing.
+- **Duration**: Additional 15 minutes
 
-### ✨ Free Shipping
-Free standard shipping on orders over $50
+### Hand/Foot Massage
+Extended therapeutic massage.
+- **Duration**: Additional 15 minutes
 
-### 🎁 Complimentary Samples
-Try new products with every order
+### Nail Strengthening Treatment
+Specialized treatment for weak or brittle nails.
+- **Duration**: Additional 10 minutes
 
-### 💝 Loyalty Rewards
-Earn points with every purchase
+## Service Packages
 
-### 🔄 Easy Returns
-30-day return policy for your peace of mind
+### Bridal Package
+Complete nail care for your special day.
+- **Includes**: Trial session, wedding day service, touch-up kit
+- **Perfect for**: Brides and wedding parties
 
-### 👩‍💼 Expert Advice
-Personal consultations with our beauty experts
+### Monthly Maintenance
+Regular nail care subscription with preferred scheduling.
+- **Includes**: Monthly manicure + pedicure at discounted rate
+- **Perfect for**: Consistent nail health and beauty
 
-## Special Offers
+### Mother-Daughter Special
+Bonding experience with side-by-side services.
+- **Includes**: Coordinated service times and special pricing
+- **Perfect for**: Quality time and shared pampering
 
-*Subscribe to our newsletter to be the first to know about:*
-- Exclusive discounts and promotions
-- Early access to new product launches
-- Seasonal beauty guides and tips
-- Members-only events and sales
+## Booking Information
 
-[Subscribe to Newsletter →](/newsletter/)
+### Appointment Scheduling
+- **Online**: [Book appointments 24/7](/book-now/)
+- **Phone**: Call (555) 123-NAIL during business hours
+- **Walk-ins**: Welcome when availability permits
 
-## Virtual Consultations
+### Service Policies
+- **Consultation**: Free consultation for custom nail art
+- **Patch Test**: Available for sensitive skin or allergies
+- **Cancellation**: 24-hour notice required to avoid fees
 
-Not sure which products are right for you? Book a complimentary virtual consultation with one of our beauty experts.
+### What to Expect
+- **Clean, Safe Environment**: Hospital-grade sterilization
+- **Premium Products**: High-quality, non-toxic when possible
+- **Expert Technicians**: Licensed professionals with ongoing training
+- **Relaxing Atmosphere**: Comfortable, peaceful setting
 
-**What's Included:**
-- Personalized skin analysis
-- Product recommendations based on your needs
-- Application tips and techniques
-- Follow-up support
+## Aftercare Tips
 
-[Book Your Consultation →](/consultation/)
+### Maintaining Your Manicure
+1. **Use cuticle oil daily** to keep nails and cuticles healthy
+2. **Wear gloves** when cleaning or gardening
+3. **Avoid using nails as tools** to prevent chipping
+4. **Schedule regular touch-ups** every 2-3 weeks
 
-## Customer Reviews
-
-*"Kapa Beauty has completely transformed my skincare routine. The products are amazing and the customer service is exceptional!"* - Sarah M.
-
-*"I love how they curate only the best products. Everything I've tried has exceeded my expectations."* - Jennifer L.
-
-*"The virtual consultation was so helpful! I finally found products that work perfectly for my skin type."* - Maria R.
+### Extending Polish Life
+- Apply base coat and top coat as recommended
+- Use quick-dry drops to prevent smudging
+- Keep hands moisturized but avoid cuticles before polish application
 
 ---
 
-## Coming Soon!
+## Ready to Book?
 
-Our full e-commerce platform is launching soon with:
-- Secure online shopping
-- Subscription services
-- Virtual try-on features
-- Enhanced product recommendations
+*Transform your nails today! [Schedule your appointment](/contact/) or [call us](tel:+15551236245) to discuss your nail goals with our experts.*
 
-**Stay tuned and follow us on social media for the latest updates!**
-
-- [Instagram](https://instagram.com/kapabeauty)
-- [Facebook](https://facebook.com/kapabeauty)
-- [Newsletter Signup](/newsletter/)
-
----
-
-*Questions about products or need recommendations? [Contact our beauty experts](/contact/) - we're here to help!* 💄✨
+**Walk-ins welcome, but appointments ensure your preferred time and technician!** �✨

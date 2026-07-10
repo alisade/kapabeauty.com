@@ -1,0 +1,123 @@
+# -----------------------------------------------------------------------------
+# La Belle Nail Studio - single source of truth for the landing page.
+# Edit this file to change anything on the home page. No HTML required.
+# -----------------------------------------------------------------------------
+
+name: "La Belle Nail Studio"
+tagline: "Premium nail care & artistry"
+bio: "Russian & e-file manicures, gel, and custom nail art in Los Angeles, CA. Book your appointment online."
+
+# Avatar shown at the top. Drop an image at static/images/logo.png (any square
+# image works best). Leave blank to show the studio initials instead.
+avatar: ""
+initials: "LB"
+
+# Rating badge (from your Fresha / Google reviews).
+rating: "4.9"
+reviewCount: "1664"
+
+# Contact / location.
+address: "17804 Chatsworth Street, Los Angeles, CA 91344"
+mapsURL: "https://www.google.com/maps/search/?api=1&query=La+Belle+Nail+Studio+Los+Angeles"
+phone: "+1 (555) 123-6245"
+email: "hello@labellenailstudio.com"
+instagram: "https://instagram.com/labellenailstudio"
+
+# The primary booking destination.
+# TODO: replace with your real Fresha booking URL.
+bookingURL: "https://www.fresha.com/"
+
+# -----------------------------------------------------------------------------
+# Link-in-bio buttons (Linktree style). Order top to bottom.
+# Set primary: true on the one that should stand out (filled accent color).
+# -----------------------------------------------------------------------------
+links:
+  - label: "Book online"
+    url: "https://www.fresha.com/"
+    icon: "calendar"
+    primary: true
+  - label: "Gift Card"
+    url: "https://squareup.com/gift"
+    icon: "gift"
+  - label: "Follow on Instagram"
+    url: "https://instagram.com/labellenailstudio"
+    icon: "instagram"
+  - label: "Nail Technician Application"
+    url: "#"
+    icon: "briefcase"
+  - label: "Get Directions"
+    url: "https://www.google.com/maps/search/?api=1&query=La+Belle+Nail+Studio+Los+Angeles"
+    icon: "pin"
+
+# -----------------------------------------------------------------------------
+# Service menu (Fresha style). Grouped by category.
+# duration and price are free text so you can write "from $90", "1 hr 45 min", etc.
+# -----------------------------------------------------------------------------
+categories:
+  - name: "Manicures"
+    services:
+      - name: "Structured Gel / Hard Gel Manicure"
+        desc: "Short & medium length"
+        duration: "1 hr 45 min"
+        price: "from $90"
+      - name: "Rubber Base Gel Polish Manicure"
+        desc: "Long-lasting, chip-resistant shine"
+        duration: "1 hr 30 min"
+        price: "$75"
+      - name: "Russian / E-file Manicure"
+        desc: "Precision cuticle work, clean finish"
+        duration: "1 hr 15 min"
+        price: "$60"
+      - name: "Classic Manicure"
+        desc: "Shape, cuticle care, polish"
+        duration: "45 min"
+        price: "$35"
+
+  - name: "Pedicures"
+    services:
+      - name: "Soft Gel Pedicure"
+        desc: "Gel polish, extended massage"
+        duration: "1 hr"
+        price: "$65"
+      - name: "Luxury Spa Pedicure"
+        desc: "Exfoliation, callus care, massage"
+        duration: "1 hr 15 min"
+        price: "$70"
+      - name: "Classic Pedicure"
+        desc: "Soak, shape, polish"
+        duration: "1 hr"
+        price: "$45"
+
+  - name: "Nail Art & Add-ons"
+    services:
+      - name: "French"
+        desc: "Classic or modern tips"
+        duration: "15 min"
+        price: "$20"
+      - name: "Custom Nail Art"
+        desc: "Per nail, varies by design"
+        duration: "15 min+"
+        price: "from $5"
+      - name: "Gel Removal & Repair"
+        desc: "Safe soak-off and nail repair"
+        duration: "30 min"
+        price: "$20"
+
+# -----------------------------------------------------------------------------
+# Opening hours.
+# -----------------------------------------------------------------------------
+hours:
+  - day: "Monday"
+    time: "Closed"
+  - day: "Tuesday"
+    time: "10:00 AM - 7:00 PM"
+  - day: "Wednesday"
+    time: "10:00 AM - 7:00 PM"
+  - day: "Thursday"
+    time: "10:00 AM - 7:00 PM"
+  - day: "Friday"
+    time: "10:00 AM - 7:00 PM"
+  - day: "Saturday"
+    time: "10:00 AM - 7:00 PM"
+  - day: "Sunday"
+    time: "10:00 AM - 5:00 PM"

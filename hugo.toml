@@ -1,6 +1,6 @@
-baseURL = 'https://kapabeauty.com'
+baseURL = 'https://labellenailstudio.com'
 languageCode = 'en-us'
-title = 'Kapa Beauty'
+title = 'La Belle Nail Studio'
 theme = 'PaperMod'
 
 enableRobotsTXT = true
@@ -14,10 +14,10 @@ buildExpired = false
 
 [params]
   env = "production"
-  title = "Kapa Beauty"
-  description = "Discover premium beauty products and expert skincare advice at Kapa Beauty. Transform your beauty routine with our curated collection of cosmetics, skincare, and wellness products."
-  keywords = ["beauty", "skincare", "cosmetics", "makeup", "wellness", "premium beauty products"]
-  author = "Kapa Beauty"
+  title = "La Belle Nail Studio"
+  description = "Discover premium nail care services and expert nail art at La Belle Nail Studio. Transform your nails with our professional manicures, pedicures, and nail art services."
+  keywords = ["nail salon", "nail care", "nail art", "manicure", "pedicure", "gel nails", "nail studio"]
+  author = "La Belle Nail Studio"
   images = ["favicon.ico"]
   DateFormat = "January 2, 2006"
   defaultTheme = "light"
@@ -47,29 +47,29 @@ buildExpired = false
     safari_pinned_tab = "safari-pinned-tab.svg"
 
   [params.label]
-    text = "Kapa Beauty"
+    text = "La Belle Nail Studio"
     icon = "favicon.ico"
     iconHeight = 35
 
   [params.homeInfoParams]
-    Title = "Welcome to Kapa Beauty ✨"
-    Content = "Discover premium beauty products and expert skincare advice. Transform your beauty routine with our curated collection of cosmetics, skincare, and wellness products designed to enhance your natural glow."
+    Title = "Welcome to La Belle Nail Studio ✨"
+    Content = "Discover premium nail care services and expert nail art. Transform your nails with our professional manicures, pedicures, and custom nail designs that enhance your natural beauty."
 
   [[params.socialIcons]]
     name = "instagram"
-    url = "https://instagram.com/kapabeauty"
+    url = "https://instagram.com/labellenailstudio"
 
   [[params.socialIcons]]
     name = "facebook"
-    url = "https://facebook.com/kapabeauty"
+    url = "https://facebook.com/labellenailstudio"
 
   [[params.socialIcons]]
     name = "twitter"
-    url = "https://twitter.com/kapabeauty"
+    url = "https://twitter.com/labellenailstudio"
 
   [[params.socialIcons]]
     name = "youtube"
-    url = "https://youtube.com/@kapabeauty"
+    url = "https://youtube.com/@labellenailstudio"
 
 [menu]
   [[menu.main]]
@@ -79,16 +79,28 @@ buildExpired = false
     weight = 1
 
   [[menu.main]]
-    identifier = "shop"
-    name = "Shop"
-    url = "/shop/"
+    identifier = "services"
+    name = "Services"
+    url = "/services/"
     weight = 2
 
   [[menu.main]]
-    identifier = "blog"
-    name = "Beauty Tips"
-    url = "/posts/"
+    identifier = "nailcare"
+    name = "Nail Care"
+    url = "/categories/nailcare/"
     weight = 3
+
+  [[menu.main]]
+    identifier = "nailart"
+    name = "Nail Art"
+    url = "/categories/nailart/"
+    weight = 4
+
+  [[menu.main]]
+    identifier = "blog"
+    name = "Nail Tips"
+    url = "/posts/"
+    weight = 5
 
   [[menu.main]]
     identifier = "about"

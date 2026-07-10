@@ -1,5 +1,5 @@
 ---
-title: "About Kapa Beauty"
+title: "About La Belle Nail Studio"
 date: 2025-08-06
 draft: false
 showToc: true
@@ -7,64 +7,75 @@ TocOpen: false
 weight: 2
 ---
 
-# About Kapa Beauty
+# About La Belle Nail Studio
 
 ## Our Story
 
-Founded with a passion for beauty and wellness, Kapa Beauty emerged from a simple belief: everyone deserves access to premium beauty products that enhance their natural glow. Our journey began when our founder recognized the need for a beauty brand that combines quality, sustainability, and inclusivity.
+Founded with a passion for nail artistry and professional care, La Belle Nail Studio emerged from a simple belief: everyone deserves to have beautiful, healthy nails that make them feel confident and express their personal style. Our journey began when our founder recognized the need for a nail salon that combines exceptional technique, premium products, and personalized service.
 
 ## Our Mission
 
-At Kapa Beauty, our mission is to empower individuals to express their unique beauty through carefully curated, high-quality products. We strive to:
+At La Belle Nail Studio, our mission is to provide exceptional nail care services while creating a relaxing, luxurious experience for every client. We strive to:
 
-- **Inspire Confidence**: Help every customer feel beautiful and confident in their own skin
-- **Promote Wellness**: Offer products that nourish both body and soul
-- **Ensure Quality**: Maintain the highest standards in product selection and customer service
-- **Support Sustainability**: Make environmentally conscious choices in our operations
+- **Enhance Natural Beauty**: Help every client achieve beautiful, healthy nails that boost confidence
+- **Promote Nail Health**: Offer services that strengthen and protect natural nails
+- **Ensure Excellence**: Maintain the highest standards in technique, hygiene, and customer service
+- **Foster Creativity**: Provide a canvas for artistic expression through custom nail art
 
 ## Our Values
 
 ### Quality First
-We believe that quality should never be compromised. Every product in our collection undergoes rigorous testing and evaluation to ensure it meets our high standards.
+We believe that quality should never be compromised. Every service we provide uses premium products and follows professional techniques to ensure the best results and nail health.
 
-### Inclusivity
-Beauty comes in all forms, and our product range reflects this diversity. We celebrate and cater to people of all skin types, tones, and beauty preferences.
+### Artistry & Creativity
+Nails are a form of self-expression, and our skilled technicians are artists who can bring any vision to life, from classic elegance to bold, creative designs.
 
-### Sustainability
-We're committed to reducing our environmental impact through sustainable packaging, ethical sourcing, and supporting brands that share our environmental values.
+### Hygiene & Safety
+We maintain strict sanitation protocols and use only sterilized tools and equipment to ensure a safe, clean environment for every client.
 
-### Customer Care
-Your beauty journey is unique, and we're here to support you every step of the way with personalized advice and exceptional customer service.
+### Personalized Care
+Every client is unique, and we tailor our services to individual needs, preferences, and nail health requirements.
 
-## Our Products
+## Our Services
 
-### Skincare Excellence
-Our skincare collection features products from leading brands known for their innovative formulations and proven results. From gentle daily cleansers to powerful anti-aging treatments, we have solutions for every skin concern.
+### Manicure Excellence
+Our manicure services range from classic treatments to luxury spa experiences, featuring hand care, cuticle treatment, nail shaping, and polish application with attention to every detail.
 
-### Makeup Artistry
-Our makeup range includes professional-grade products used by makeup artists worldwide. Whether you're a beginner or a beauty expert, our products help you achieve any look you desire.
+### Pedicure Luxury
+Our pedicure treatments provide complete foot care in a relaxing environment, including exfoliation, callus removal, nail care, and moisturizing treatments.
 
-### Wellness & Self-Care
-Beauty is more than skin deep. Our wellness collection includes products designed to promote overall well-being, from aromatherapy essentials to luxurious bath and body products.
+### Nail Art Mastery
+Our talented nail artists specialize in custom designs, from subtle accent nails to intricate artwork, seasonal themes, and the latest nail art trends.
+
+### Specialized Treatments
+We offer gel manicures, acrylic extensions, nail repairs, strengthening treatments, and special occasion nail designs for weddings, parties, and events.
 
 ## Our Team
 
-Behind Kapa Beauty is a team of passionate beauty enthusiasts, skincare experts, and customer service professionals dedicated to helping you look and feel your best. Our team stays current with the latest beauty trends and scientific advances to bring you the most effective products and advice.
+Behind La Belle Nail Studio is a team of licensed nail technicians and artists who are passionate about their craft. Our team stays current with the latest trends, techniques, and products through ongoing education and training, ensuring every client receives expert care.
+
+## Our Salon
+
+Located in a serene, beautifully designed space, our salon provides a peaceful escape from the busy world. We've created an environment where you can relax, unwind, and enjoy being pampered while receiving professional nail care.
 
 ## Contact Us
 
-We'd love to hear from you! Whether you have questions about our products, need personalized recommendations, or want to share your beauty journey, we're here to help.
+We'd love to help you achieve your nail goals! Whether you need a classic manicure, want to try the latest nail art trend, or have questions about nail care, we're here to help.
 
-- **Email**: hello@kapabeauty.com
-- **Phone**: +1 (555) 123-KAPA
-- **Address**: 123 Beauty Boulevard, Glow City, BC 12345
+- **Email**: hello@labellenailstudio.com
+- **Phone**: +1 (555) 123-NAIL
+- **Address**: 123 Beauty Boulevard, Nail City, NC 12345
 
-Follow us on social media for the latest beauty tips, product launches, and exclusive offers:
-- [Instagram](https://instagram.com/kapabeauty)
-- [Facebook](https://facebook.com/kapabeauty)
-- [Twitter](https://twitter.com/kapabeauty)
-- [YouTube](https://youtube.com/@kapabeauty)
+**Salon Hours:**
+- Monday - Saturday: 9 AM - 7 PM
+- Sunday: 11 AM - 5 PM
+
+Follow us on social media for nail inspiration, tips, and special offers:
+- [Instagram](https://instagram.com/labellenailstudio)
+- [Facebook](https://facebook.com/labellenailstudio)
+- [Twitter](https://twitter.com/labellenailstudio)
+- [YouTube](https://youtube.com/@labellenailstudio)
 
 ---
 
-*Ready to start your beauty journey with us? [Visit our shop](/shop/) or [read our latest beauty tips](/posts/).*
+*Ready to pamper your nails with us? [Book your appointment](/contact/) or [explore our services](/services/).*
