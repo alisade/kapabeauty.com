@@ -102,9 +102,11 @@
     .spin{width:20px;height:20px;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;border-radius:50%;display:inline-block;animation:sp .7s linear infinite}
     @keyframes sp{to{transform:rotate(360deg)}}
     /* ---------- Embed (inside the home-page modal) ---------- */
-    html.embed body { background: #f6efe7; }
+    html.embed body { background: #f6efe7; overscroll-behavior: contain; }
     html.embed .banner, html.embed .hero { display: none; }
-    html.embed .wrap { padding-top: 14px; padding-bottom: 24px; }
+    html.embed .wrap { padding-top: 12px; padding-bottom: 24px; }
+    /* Home link moves to the top and is the modal's close affordance. */
+    html.embed .back { display: inline-flex; align-items: center; text-align: left; margin: 0 0 12px; font-weight: 600; font-size: 15px; }
   </style>
 </head>
 <body>
@@ -349,6 +351,9 @@
     var back = document.querySelector('.back');
     if (!back) return;
     back.innerHTML = '&larr; Home';
+    // Move it to the top of the flow so it's the visible close in the modal.
+    var wrap = document.querySelector('.wrap');
+    if (wrap && back.parentNode) wrap.insertBefore(back, wrap.firstChild);
     back.addEventListener('click', function (e) {
       if (window.parent && window.parent !== window) {
         e.preventDefault();

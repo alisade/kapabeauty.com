@@ -231,41 +231,30 @@
     @media (prefers-reduced-motion: reduce) { .topbar { transition: none; } }
 
     /* ---------- Booking modal (single-page overlay) ---------- */
-    .bookmodal { position: fixed; inset: 0; z-index: 200; display: none; }
-    .bookmodal.open { display: block; }
+    /* height:100dvh tracks the visible viewport on iOS (survives the Safari
+       toolbar show/hide); vh is the fallback for older browsers. */
+    .bookmodal { position: fixed; left: 0; right: 0; top: 0; height: 100vh; height: 100dvh; z-index: 200; display: none; }
+    .bookmodal.open { display: flex; align-items: center; justify-content: center; }
     .bookmodal-backdrop {
-      position: absolute; inset: 0; background: rgba(46, 40, 35, .5);
+      position: fixed; inset: 0; background: rgba(46, 40, 35, .5);
       opacity: 0; transition: opacity .25s ease; -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
     }
     .bookmodal.open .bookmodal-backdrop { opacity: 1; }
     .bookmodal-panel {
-      position: absolute; left: 50%; top: 50%; transform: translate(-50%, -46%);
-      width: min(620px, 96vw); height: min(760px, 92vh);
+      position: relative; z-index: 1;
+      width: min(620px, 96vw);
+      height: min(760px, 92vh); height: min(760px, 92dvh); max-height: 100%;
       background: #f6efe7; border-radius: 20px; overflow: hidden;
       box-shadow: 0 24px 60px rgba(46, 40, 35, .3);
-      opacity: 0; transition: opacity .25s ease, transform .25s ease;
-      display: flex; flex-direction: column;
+      opacity: 0; transform: translateY(14px);
+      transition: opacity .25s ease, transform .25s ease;
+      display: flex; overscroll-behavior: contain;
     }
-    .bookmodal.open .bookmodal-panel { opacity: 1; transform: translate(-50%, -50%); }
-    .bookmodal-head {
-      flex: 0 0 auto; display: flex; align-items: center; gap: 10px;
-      padding: 13px 16px; border-bottom: 1px solid var(--line); background: var(--card);
-    }
-    .bookmodal-title { flex: 1; font-family: var(--serif); font-size: 18px; font-weight: 600; color: var(--ink); }
-    .bookmodal-x {
-      flex: 0 0 auto; width: 34px; height: 34px; border: 0; border-radius: 50%;
-      background: #efe6d9; color: var(--ink); font-size: 22px; line-height: 1; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .bookmodal-x:hover { background: #e7dccd; }
-    .bookmodal-frame { flex: 1; width: 100%; border: 0; background: #f6efe7; }
-    body.modal-open { overflow: hidden; }
+    .bookmodal.open .bookmodal-panel { opacity: 1; transform: translateY(0); }
+    .bookmodal-frame { flex: 1 1 auto; min-height: 0; width: 100%; border: 0; background: #f6efe7; }
     @media (max-width: 600px) {
-      .bookmodal-panel {
-        left: 0; top: auto; bottom: 0; transform: translateY(6%);
-        width: 100%; height: 94vh; border-radius: 20px 20px 0 0;
-      }
-      .bookmodal.open .bookmodal-panel { transform: translateY(0); }
+      .bookmodal.open { align-items: flex-end; }
+      .bookmodal-panel { width: 100%; height: 94vh; height: 94dvh; max-height: 94dvh; border-radius: 20px 20px 0 0; }
     }
     @media (prefers-reduced-motion: reduce) {
       .bookmodal-backdrop, .bookmodal-panel { transition: none; }
@@ -412,10 +401,6 @@
   <div id="bookModal" class="bookmodal" aria-hidden="true">
     <div class="bookmodal-backdrop" data-close></div>
     <div class="bookmodal-panel" role="dialog" aria-modal="true" aria-label="Book an appointment">
-      <div class="bookmodal-head">
-        <span class="bookmodal-title">Book an appointment</span>
-        <button class="bookmodal-x" type="button" data-close aria-label="Close booking">&times;</button>
-      </div>
       <iframe id="bookFrame" class="bookmodal-frame" title="Book an appointment" src="about:blank" loading="lazy"></iframe>
     </div>
   </div>
@@ -431,19 +416,30 @@
       var svc = (a.search.match(/[?&]service=([^&]+)/) || [])[1];
       return '/book/?embed=1' + (svc ? '&service=' + svc : '');
     }
+    var scrollY = 0;
+    function lockBody() {  // real scroll-lock that works on iOS Safari
+      scrollY = window.scrollY || window.pageYOffset || 0;
+      var b = document.body;
+      b.style.position = 'fixed'; b.style.top = (-scrollY) + 'px';
+      b.style.left = '0'; b.style.right = '0'; b.style.width = '100%';
+    }
+    function unlockBody() {
+      var b = document.body;
+      b.style.position = ''; b.style.top = ''; b.style.left = ''; b.style.right = ''; b.style.width = '';
+      window.scrollTo(0, scrollY);
+    }
     function openModal(href, push) {
       frame.src = bookHrefToEmbed(href);
+      lockBody();
       modal.classList.add('open'); modal.setAttribute('aria-hidden', 'false');
-      document.body.classList.add('modal-open');
       open = true;
       if (push) history.pushState({ lbModal: 1 }, '', href);
-      var x = modal.querySelector('.bookmodal-x'); if (x) x.focus();
     }
     function closeModal(fromPop) {
       if (!open) return;
       modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true');
-      document.body.classList.remove('modal-open');
       open = false;
+      unlockBody();
       setTimeout(function () { if (!open) frame.src = 'about:blank'; }, 260);
       // Keep the URL in sync: user-initiated close pops the pushed /book state.
       if (!fromPop && history.state && history.state.lbModal) history.back();
