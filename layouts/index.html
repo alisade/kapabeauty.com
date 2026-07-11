@@ -197,9 +197,50 @@
       .name { font-size: 29px; }
       .wrap { padding-top: 28px; }
     }
+
+    /* ---------- Shrinking sticky header (T14) ---------- */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      transform: translateY(-100%); opacity: 0;
+      transition: transform .28s ease, opacity .28s ease;
+      background: rgba(246, 239, 231, .9);
+      -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 2px 12px rgba(70, 55, 40, .07);
+    }
+    .topbar.show { transform: translateY(0); opacity: 1; }
+    .topbar-in {
+      max-width: 600px; margin: 0 auto; padding: 9px 18px;
+      display: flex; align-items: center; gap: 11px;
+    }
+    .tb-logo {
+      width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex: 0 0 auto;
+      border: 2px solid #fff; box-shadow: 0 2px 8px rgba(70, 55, 40, .14);
+      background: var(--accent); display: flex; align-items: center; justify-content: center;
+      font-family: var(--serif); font-size: 15px; color: var(--accent-ink);
+    }
+    .tb-name {
+      flex: 1; min-width: 0; font-family: var(--serif); font-size: 18px; font-weight: 600;
+      color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .tb-book {
+      flex: 0 0 auto; background: var(--accent); color: var(--accent-ink); text-decoration: none;
+      font-weight: 600; font-size: 13.5px; padding: 8px 16px; border-radius: 999px; white-space: nowrap;
+    }
+    .tb-book:hover { opacity: .93; }
+    @media (prefers-reduced-motion: reduce) { .topbar { transition: none; } }
   </style>
 </head>
 <body>
+  <!-- Shrinking sticky header: appears when the big logo scrolls off (T14) -->
+  <header id="topbar" class="topbar" aria-hidden="true">
+    <div class="topbar-in">
+      {{ if $s.avatar }}<img class="tb-logo" src="{{ $s.avatar }}" alt="">{{ else }}<div class="tb-logo">{{ $s.initials }}</div>{{ end }}
+      <span class="tb-name">{{ $s.name }}</span>
+      <a class="tb-book" href="{{ $s.bookingURL }}"{{ if hasPrefix $s.bookingURL "http" }} target="_blank" rel="noopener"{{ end }}>Book</a>
+    </div>
+  </header>
+
   {{ if $s.banner }}
   <div class="banner" style="background-image: url('{{ $s.banner }}');"></div>
   {{ else }}
@@ -317,5 +358,22 @@
     </footer>
 
   </main>
+
+  <script>
+  (function () {
+    var bar = document.getElementById('topbar');
+    var target = document.querySelector('.avatar');
+    if (!bar || !target) return;
+    function set(on) { bar.classList.toggle('show', on); bar.setAttribute('aria-hidden', on ? 'false' : 'true'); }
+    if ('IntersectionObserver' in window) {
+      // Show the compact bar once the big logo has scrolled up off the top.
+      new IntersectionObserver(function (e) { set(!e[0].isIntersecting); },
+        { threshold: 0, rootMargin: '-20px 0px 0px 0px' }).observe(target);
+    } else {
+      var onScroll = function () { set((window.scrollY || window.pageYOffset || 0) > 220); };
+      window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
+    }
+  })();
+  </script>
 </body>
 </html>
