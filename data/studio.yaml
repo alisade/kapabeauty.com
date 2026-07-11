@@ -28,9 +28,22 @@ phone: "+1 (555) 123-6245"
 email: "hello@labellenailstudio.com"
 instagram: "https://instagram.com/labellenailstudio"
 
-# The primary booking destination.
-# TODO: replace with your real Fresha booking URL.
-bookingURL: "https://www.fresha.com/"
+# ---------------------------------------------------------------------------
+# Booking. The site has an on-site /book/ page that EMBEDS your booking
+# provider in an iframe. To make it work:
+#   1. bookingEmbedURL: paste your provider's embeddable booking URL. Providers
+#      that embed cleanly: Square Appointments (free), Acuity, Setmore.
+#        Square example: https://squareup.com/appointments/book/XXXXXXXX/start
+#      Leave blank and the /book page shows a fallback link to bookingHostedURL.
+#   2. bookingURL: where every "Book" button points. Keep "/book/" for the
+#      on-site embedded page, or set an external URL to link straight out.
+#   3. bookingHostedURL: a hosted booking page to link out to (used as the
+#      fallback on /book until you set bookingEmbedURL). Your Fresha link fits
+#      here since Fresha only supports link-out, not embedding.
+# ---------------------------------------------------------------------------
+bookingEmbedURL: ""
+bookingURL: "/book/"
+bookingHostedURL: "https://www.fresha.com/"
 
 # -----------------------------------------------------------------------------
 # Link-in-bio buttons (Linktree style). Order top to bottom.
@@ -38,7 +51,7 @@ bookingURL: "https://www.fresha.com/"
 # -----------------------------------------------------------------------------
 links:
   - label: "Book online"
-    url: "https://www.fresha.com/"
+    url: "/book/"
     icon: "calendar"
     primary: true
   - label: "Gift Card"

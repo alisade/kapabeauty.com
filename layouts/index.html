@@ -240,7 +240,7 @@
     {{ with $s.links }}
     <nav class="links">
       {{ range . }}
-      <a class="link{{ if .primary }} primary{{ end }}" href="{{ .url }}"{{ if ne .icon "instagram" }} target="_blank" rel="noopener"{{ end }}>
+      <a class="link{{ if .primary }} primary{{ end }}" href="{{ .url }}"{{ if hasPrefix .url "http" }} target="_blank" rel="noopener"{{ end }}>
         <span class="ico">{{ partial "svg-icon.html" .icon }}</span>
         <span class="label">{{ .label }}</span>
         <span class="chev">
@@ -272,7 +272,7 @@
             </div>
             <div class="svc-right">
               <div class="svc-price">{{ .price }}</div>
-              <a class="svc-book" href="{{ $s.bookingURL }}" target="_blank" rel="noopener">Book</a>
+              <a class="svc-book" href="{{ $s.bookingURL }}"{{ if hasPrefix $s.bookingURL "http" }} target="_blank" rel="noopener"{{ end }}>Book</a>
             </div>
           </div>
           {{ end }}
@@ -280,7 +280,7 @@
         {{ end }}
       </div>
       <div class="menu-cta">
-        <a class="link primary" href="{{ $s.bookingURL }}" target="_blank" rel="noopener">
+        <a class="link primary" href="{{ $s.bookingURL }}"{{ if hasPrefix $s.bookingURL "http" }} target="_blank" rel="noopener"{{ end }}>
           <span class="ico">{{ partial "svg-icon.html" "calendar" }}</span>
           <span class="label">See all services &amp; book</span>
           <span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></span>
