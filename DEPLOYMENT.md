@@ -44,25 +44,13 @@ deploys.
 
 ## DNS (Cloudflare via Terraform)
 
-DNS records that point `labellenailstudio.com` at GitHub Pages are managed in
-`terraform/` and applied with the helper script:
+DNS for `labellenailstudio.com` is managed in the **private** repo
+`alisade/labelle-booking` under `infra/` (Terraform + `deploy-dns.sh`), not in
+this public repo. `deploy-dns.sh` reads the Cloudflare API token from
+`$CLOUDFLARE_API_TOKEN` or `~/.kapa-cloudflare-token` -- no token is committed.
 
-```bash
-./deploy-dns.sh
-```
-
-The script:
-
-1. Decrypts the Cloudflare API token from `cloudflare.ansible.vault`
-   (via `ansible-vault`) and exports it as `CLOUDFLARE_API_TOKEN`
-2. Runs `terraform init` / `plan` in `terraform/`
-3. Prompts before `terraform apply`
-
-It creates the GitHub Pages A records (185.199.108-111.153) and AAAA records,
-plus the `www` CNAME. The Cloudflare zone name is set in
-`terraform/terraform.tfvars` (`labellenailstudio.com`).
-
-After applying, allow time for DNS propagation, then verify at
+It creates the GitHub Pages A records (185.199.108-111.153), AAAA records, and
+the `www` CNAME. After applying, allow time for DNS propagation, then verify at
 https://www.whatsmydns.net/#A/labellenailstudio.com.
 
 ## Troubleshooting
@@ -71,8 +59,9 @@ https://www.whatsmydns.net/#A/labellenailstudio.com.
   YAML syntax error in `data/studio.yaml` -- validate indentation.
 - **Custom domain reverted:** confirm `static/CNAME` still contains
   `labellenailstudio.com` (it is republished on every build).
-- **DNS not resolving:** re-run `./deploy-dns.sh` and confirm the records in the
-  Cloudflare dashboard; propagation can take up to 24 hours.
+- **DNS not resolving:** re-run `infra/deploy-dns.sh` (in the private
+  `labelle-booking` repo) and confirm the records in the Cloudflare dashboard;
+  propagation can take up to 24 hours.
 
 ## Before going live
 

@@ -57,17 +57,18 @@ kapabeauty.com/
 │   └── partials/svg-icon.html    # Inline icon set
 ├── content/_index.md             # Home page stub (metadata only)
 ├── static/                       # CNAME, robots.txt, images
-├── terraform/                    # Cloudflare DNS (see below)
-├── deploy-dns.sh                 # One-shot DNS deploy helper
 └── hugo.toml                     # Site configuration
 ```
 
-## Booking backend
+## Booking backend & infrastructure
 
-The `/book/` page's booking system (availability, bookings, admin, anti-spam)
-runs on a Cloudflare Worker + D1 database. That code lives in a **separate
-private repo** (`alisade/labelle-booking`), not here. This site only needs the
-deployed Worker URL, set as `bookingApiURL` in `data/studio.yaml`.
+Kept out of this public repo, in the **private repo** `alisade/labelle-booking`:
+
+- **Booking system** (`/book/` availability, bookings, admin, anti-spam) --
+  a Cloudflare Worker + D1 database. This site only needs the deployed Worker
+  URL, set as `bookingApiURL` in `data/studio.yaml`.
+- **DNS / infrastructure** (`infra/`) -- Terraform + `deploy-dns.sh` for the
+  Cloudflare DNS records. No API tokens are committed anywhere.
 
 ## Deployment
 
@@ -83,15 +84,9 @@ The site auto-deploys to GitHub Pages via GitHub Actions on every push to
 ### Custom domain / DNS
 
 The custom domain is set via `static/CNAME` (published to the site root as
-`CNAME`). DNS is managed in Cloudflare through Terraform:
-
-```bash
-./deploy-dns.sh
-```
-
-This decrypts the Cloudflare API token from `cloudflare.ansible.vault`, then
-runs `terraform plan` / `apply` in `terraform/` to create the GitHub Pages A /
-AAAA records for `labellenailstudio.com`. See `terraform/README.md` for details.
+`CNAME`). The Cloudflare DNS records for `labellenailstudio.com` are managed
+with Terraform in the private `alisade/labelle-booking` repo under `infra/`
+(run `infra/deploy-dns.sh` there).
 
 ## License
 
