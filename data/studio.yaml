@@ -118,6 +118,7 @@ categories:
         duration: "15 min"
         price: "$20"
       - name: "Custom Nail Art"
+        bookingId: "custom-art"
         desc: "Per nail, varies by design"
         duration: "15 min+"
         price: "from $5"
