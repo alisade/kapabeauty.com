@@ -132,7 +132,7 @@ categories:
 # -----------------------------------------------------------------------------
 hours:
   - day: "Monday"
-    time: "Closed"
+    time: "10:00 AM - 7:00 PM"
   - day: "Tuesday"
     time: "10:00 AM - 7:00 PM"
   - day: "Wednesday"
