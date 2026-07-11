@@ -275,6 +275,14 @@
         {{ . }}
       </a></div>
       {{ end }}
+
+      {{ if or $s.instagram $s.email $s.phone }}
+      <div class="socials" style="margin:14px 0 0">
+        {{ with $s.instagram }}<a href="{{ . }}" target="_blank" rel="noopener" aria-label="Instagram">{{ partial "svg-icon.html" "instagram" }}</a>{{ end }}
+        {{ with $s.email }}<a href="mailto:{{ . }}" aria-label="Email">{{ partial "svg-icon.html" "mail" }}</a>{{ end }}
+        {{ with $s.phone }}<a href="tel:{{ . }}" aria-label="Phone">{{ partial "svg-icon.html" "phone" }}</a>{{ end }}
+      </div>
+      {{ end }}
     </header>
 
     <!-- ===================== LINK BUTTONS ===================== -->
