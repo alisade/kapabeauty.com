@@ -29,19 +29,17 @@ email: "hello@labellenailstudio.com"
 instagram: "https://instagram.com/labellenailstudio"
 
 # ---------------------------------------------------------------------------
-# Booking. The site has an on-site /book/ page that EMBEDS your booking
-# provider in an iframe. To make it work:
-#   1. bookingEmbedURL: paste your provider's embeddable booking URL. Providers
-#      that embed cleanly: Square Appointments (free), Acuity, Setmore.
-#        Square example: https://squareup.com/appointments/book/XXXXXXXX/start
-#      Leave blank and the /book page shows a fallback link to bookingHostedURL.
-#   2. bookingURL: where every "Book" button points. Keep "/book/" for the
-#      on-site embedded page, or set an external URL to link straight out.
-#   3. bookingHostedURL: a hosted booking page to link out to (used as the
-#      fallback on /book until you set bookingEmbedURL). Your Fresha link fits
-#      here since Fresha only supports link-out, not embedding.
+# Booking. The /book/ page runs our own booking app (see layouts/_default/
+# single.html) backed by the Cloudflare Worker + D1 API in worker/.
+#   1. bookingApiURL: the deployed Worker URL. After running the deploy steps
+#      in worker/README.md, paste it here, e.g.
+#        https://labelle-booking.<your-subdomain>.workers.dev
+#      Leave blank and /book shows a "being set up" message.
+#   2. bookingURL: where every "Book" button points. Keep "/book/".
+#   3. bookingHostedURL: optional fallback contact/booking link shown only if
+#      the API is unset or unreachable.
 # ---------------------------------------------------------------------------
-bookingEmbedURL: ""
+bookingApiURL: ""
 bookingURL: "/book/"
 bookingHostedURL: "https://www.fresha.com/"
 
