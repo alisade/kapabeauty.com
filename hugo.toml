@@ -14,11 +14,6 @@ disableKinds = ["taxonomy", "term", "section", "RSS"]
   disableXML = true
   minifyOutput = true
 
-[params]
-  env = "production"
-  description = "Russian & e-file manicures, gel, and custom nail art in Thousand Oaks, CA. Book your appointment online."
-  author = "La Belle Nail Studio"
-
 [markup]
   [markup.goldmark]
     [markup.goldmark.renderer]
