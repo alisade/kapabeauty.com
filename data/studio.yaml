@@ -14,7 +14,7 @@ banner: "/images/banner.svg"
 
 # Avatar shown at the top, overlapping the banner. Drop an image at
 # static/images/logo.png (square works best). Leave blank for the initials.
-avatar: ""
+avatar: "/images/logo.svg"
 initials: "LB"
 
 # Rating badge (from your Fresha / Google reviews).
@@ -61,7 +61,7 @@ links:
     url: "#"
     icon: "briefcase"
   - label: "Get Directions"
-    url: "https://www.google.com/maps/search/?api=1&query=La+Belle+Nail+Studio+Los+Angeles"
+    url: "https://www.google.com/maps/search/?api=1&query=1863+E+Thousand+Oaks+Blvd+Thousand+Oaks+CA+91362"
     icon: "pin"
 
 # -----------------------------------------------------------------------------
