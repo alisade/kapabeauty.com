@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 460" preserveAspectRatio="xMidYMid slice" role="img" aria-label="La Belle Nail Studio">
+  <defs>
+    <linearGradient id="base" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"  stop-color="#f0ddcb"/>
+      <stop offset="42%" stop-color="#d3ac90"/>
+      <stop offset="100%" stop-color="#9c7853"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="8%" r="70%">
+      <stop offset="0%"  stop-color="#fff6ec" stop-opacity="0.5"/>
+      <stop offset="65%" stop-color="#fff6ec" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f0d488"/>
+      <stop offset="100%" stop-color="#b98e3f"/>
+    </linearGradient>
+  </defs>
+
+  <!-- base + top glow -->
+  <rect width="1600" height="460" fill="url(#base)"/>
+  <circle cx="250" cy="360" r="300" fill="#fff6ec" opacity="0.10"/>
+  <circle cx="1360" cy="330" r="330" fill="#8b6749" opacity="0.14"/>
+  <circle cx="1180" cy="70"  r="90"  fill="#fff6ec" opacity="0.10"/>
+  <rect width="1600" height="460" fill="url(#glow)"/>
+
+  <!-- thin gold arcs sweeping across the center -->
+  <g fill="none" stroke="url(#gold)" stroke-linecap="round">
+    <path d="M330 70 Q 800 -70 1270 70"  stroke-width="2"   opacity="0.40"/>
+    <path d="M470 250 Q 800 150 1130 250" stroke-width="1.5" opacity="0.30"/>
+    <circle cx="1330" cy="150" r="120" stroke-width="2" opacity="0.35"/>
+  </g>
+
+  <!-- gold sparkle constellation across the visible band (avoids bottom-center) -->
+  <g fill="url(#gold)">
+    <path d="M800 118 q9 30 39 39 q-30 9 -39 39 q-9 -30 -39 -39 q30 -9 39 -39 z" opacity="0.92"/>
+    <path d="M545 105 q7 24 31 31 q-24 7 -31 31 q-7 -24 -31 -31 q24 -7 31 -31 z" opacity="0.82"/>
+    <path d="M1075 150 q6 22 28 28 q-22 6 -28 28 q-6 -22 -28 -28 q22 -6 28 -28 z" opacity="0.82"/>
+    <path d="M660 55 q4.5 16 20 20 q-16 4.5 -20 20 q-4.5 -16 -20 -20 q16 -4.5 20 -20 z" opacity="0.72"/>
+    <path d="M955 70 q4.5 16 20 20 q-16 4.5 -20 20 q-4.5 -16 -20 -20 q16 -4.5 20 -20 z" opacity="0.72"/>
+    <path d="M1180 105 q4 14 18 18 q-14 4 -18 18 q-4 -14 -18 -18 q14 -4 18 -18 z" opacity="0.66"/>
+    <path d="M430 175 q4 14 18 18 q-14 4 -18 18 q-4 -14 -18 -18 q14 -4 18 -18 z" opacity="0.6"/>
+    <path d="M615 205 q3 11 15 15 q-11 3 -15 15 q-3 -11 -15 -15 q11 -3 15 -15 z" opacity="0.55"/>
+  </g>
+
+  <!-- faint dust dots -->
+  <g fill="#fff6ec">
+    <circle cx="730" cy="185" r="3" opacity="0.5"/>
+    <circle cx="880" cy="130" r="2.5" opacity="0.45"/>
+    <circle cx="1010" cy="205" r="2.5" opacity="0.4"/>
+    <circle cx="500" cy="60"  r="2.5" opacity="0.4"/>
+    <circle cx="1130" cy="60" r="2.5" opacity="0.4"/>
+  </g>
+</svg>

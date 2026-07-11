@@ -16,7 +16,7 @@ disableKinds = ["taxonomy", "term", "section", "RSS"]
 
 [params]
   env = "production"
-  description = "Russian & e-file manicures, gel, and custom nail art in Los Angeles, CA. Book your appointment online."
+  description = "Russian & e-file manicures, gel, and custom nail art in Thousand Oaks, CA. Book your appointment online."
   author = "La Belle Nail Studio"
 
 [markup]

@@ -5,12 +5,12 @@
 
 name: "La Belle Nail Studio"
 tagline: "Premium nail care & artistry"
-bio: "Russian & e-file manicures, gel, and custom nail art in Los Angeles, CA. Book your appointment online."
+bio: "Russian & e-file manicures, gel, and custom nail art in Thousand Oaks, CA. Book your appointment online."
 
 # Wide cover banner across the very top (like a Fresha cover photo).
 # Drop a wide image at static/images/banner.jpg and set it below, e.g.
 # banner: "/images/banner.jpg". Leave blank for an elegant gradient banner.
-banner: ""
+banner: "/images/banner.svg"
 
 # Avatar shown at the top, overlapping the banner. Drop an image at
 # static/images/logo.png (square works best). Leave blank for the initials.
@@ -24,9 +24,9 @@ reviewCount: "1664"
 # Contact / location.
 address: "1863 E Thousand Oaks Blvd, Thousand Oaks, CA 91362"
 mapsURL: "https://www.google.com/maps/search/?api=1&query=1863+E+Thousand+Oaks+Blvd+Thousand+Oaks+CA+91362"
-phone: "+1 (555) 123-6245"
+phone: "(805) 372-9916"
 email: "hello@labellenailstudio.com"
-instagram: "https://instagram.com/labellenailstudio"
+instagram: "https://www.instagram.com/wearelabelle/"
 
 # ---------------------------------------------------------------------------
 # Booking. The /book/ page runs our own booking app (see layouts/_default/
@@ -53,7 +53,7 @@ links:
     url: "https://squareup.com/gift"
     icon: "gift"
   - label: "Follow on Instagram"
-    url: "https://instagram.com/labellenailstudio"
+    url: "https://www.instagram.com/wearelabelle/"
     icon: "instagram"
   - label: "Nail Technician Application"
     url: "#"
