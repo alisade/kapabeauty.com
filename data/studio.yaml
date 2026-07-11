@@ -36,12 +36,9 @@ instagram: "https://instagram.com/labellenailstudio"
 #        https://labelle-booking.<your-subdomain>.workers.dev
 #      Leave blank and /book shows a "being set up" message.
 #   2. bookingURL: where every "Book" button points. Keep "/book/".
-#   3. bookingHostedURL: optional fallback contact/booking link shown only if
-#      the API is unset or unreachable.
 # ---------------------------------------------------------------------------
 bookingApiURL: "https://labelle-booking.kapabeautyinc.workers.dev"
 bookingURL: "/book/"
-bookingHostedURL: "https://www.fresha.com/"
 
 # -----------------------------------------------------------------------------
 # Link-in-bio buttons (Linktree style). Order top to bottom.

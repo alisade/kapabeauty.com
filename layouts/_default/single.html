@@ -116,8 +116,7 @@
     <div id="notReady" class="card hide">
       <div class="confirm">
         <h2>Booking is being set up</h2>
-        <p>Our online booking will be available here shortly.</p>
-        {{ with $s.bookingHostedURL }}<p style="margin-top:18px"><a class="btn" href="{{ . }}" target="_blank" rel="noopener" style="width:auto;display:inline-flex;padding:13px 24px">Contact us to book</a></p>{{ end }}
+        <p>Our online booking will be available here shortly. Please check back soon.</p>
       </div>
     </div>
 
@@ -185,7 +184,6 @@
   <script>
   (function(){
     var API = "{{ $s.bookingApiURL }}".replace(/\/+$/,"");
-    var HOSTED = "{{ $s.bookingHostedURL }}";
     if(!API){ document.getElementById("notReady").classList.remove("hide"); return; }
     document.getElementById("app").classList.remove("hide");
 
