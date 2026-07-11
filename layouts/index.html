@@ -465,6 +465,10 @@
     modal.addEventListener('click', function (e) { if (e.target.hasAttribute('data-close')) closeModal(false); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && open) closeModal(false); });
     window.addEventListener('popstate', function () { closeModal(true); });
+    // The "Home" link inside the /book iframe asks us to close.
+    window.addEventListener('message', function (e) {
+      if (e.origin === location.origin && e.data === 'lb-close') closeModal(false);
+    });
   })();
 
   (function () {

@@ -103,7 +103,7 @@
     @keyframes sp{to{transform:rotate(360deg)}}
     /* ---------- Embed (inside the home-page modal) ---------- */
     html.embed body { background: #f6efe7; }
-    html.embed .banner, html.embed .hero, html.embed .back { display: none; }
+    html.embed .banner, html.embed .hero { display: none; }
     html.embed .wrap { padding-top: 14px; padding-bottom: 24px; }
   </style>
 </head>
@@ -339,6 +339,21 @@
       else { show(1); }
     }).catch(function(){
       el("app").classList.add("hide"); el("notReady").classList.remove("hide");
+    });
+  })();
+
+  // Embed mode: the "Back to home" link becomes a "Home" link that closes the
+  // parent modal (rather than navigating the iframe to home).
+  (function () {
+    if (!document.documentElement.classList.contains('embed')) return;
+    var back = document.querySelector('.back');
+    if (!back) return;
+    back.innerHTML = '&larr; Home';
+    back.addEventListener('click', function (e) {
+      if (window.parent && window.parent !== window) {
+        e.preventDefault();
+        window.parent.postMessage('lb-close', '*');
+      }
     });
   })();
   </script>
