@@ -324,7 +324,12 @@
 
     // ---- boot ----
     fetch(API+"/api/config").then(function(r){return r.json()}).then(function(d){
-      cfg=d; renderServices(); show(1);
+      cfg=d; renderServices();
+      // Deep link: /book/?service=<id> preselects the service and jumps to Date.
+      var pre=new URLSearchParams(location.search).get("service");
+      var svc=pre?cfg.services.filter(function(s){return s.id===pre;})[0]:null;
+      if(svc){ state.service=svc; el("s2sub").textContent=svc.label+" - "+durLabel(svc.minutes); buildDates(); show(2); }
+      else { show(1); }
     }).catch(function(){
       el("app").classList.add("hide"); el("notReady").classList.remove("hide");
     });

@@ -272,7 +272,7 @@
             </div>
             <div class="svc-right">
               <div class="svc-price">{{ .price }}</div>
-              <a class="svc-book" href="{{ $s.bookingURL }}"{{ if hasPrefix $s.bookingURL "http" }} target="_blank" rel="noopener"{{ end }}>Book</a>
+              <a class="svc-book" href="{{ $s.bookingURL }}{{ with .bookingId }}?service={{ . }}{{ end }}"{{ if hasPrefix $s.bookingURL "http" }} target="_blank" rel="noopener"{{ end }}>Book</a>
             </div>
           </div>
           {{ end }}
