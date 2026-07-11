@@ -12,6 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  {{ if $s.bookingTurnstileSiteKey }}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>{{ end }}
   <style>
     :root {
       --bg-top:#f6efe7; --bg-bottom:#e9ddcf; --card:#fffdfb; --ink:#2e2823;
@@ -162,6 +163,9 @@
           <div class="field"><label>Phone *</label><input id="fPhone" required inputmode="tel" autocomplete="tel"></div>
           <div class="field"><label>Email</label><input id="fEmail" type="email" autocomplete="email"></div>
           <div class="field"><label>Notes (optional)</label><textarea id="fNotes" rows="2" placeholder="Anything we should know?"></textarea></div>
+          <!-- honeypot: hidden from humans, bots tend to fill it -->
+          <input id="fCompany" name="company" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+          <div id="tsWidget" style="margin-top:2px"></div>
           <div id="formMsg" class="msg err hide"></div>
           <button class="btn" id="confirmBtn" type="submit">Confirm booking</button>
           <button class="btn btn-ghost" id="back4" type="button">Back</button>
@@ -185,6 +189,7 @@
   <script>
   (function(){
     var API = "{{ $s.bookingApiURL }}".replace(/\/+$/,"");
+    var TS_SITEKEY = "{{ $s.bookingTurnstileSiteKey }}";
     if(!API){ document.getElementById("notReady").classList.remove("hide"); return; }
     document.getElementById("app").classList.remove("hide");
 
@@ -272,7 +277,18 @@
         '<div class="row"><span class="k">Duration</span><span class="v">'+durLabel(state.service.minutes)+'</span></div>'+
         '<div class="row"><span class="k">Price</span><span class="v">'+(state.service.price||"")+'</span></div>';
       show(4);
+      renderTurnstile();
     }
+
+    // ---- Turnstile (CAPTCHA) ----
+    var tsWidgetId=null;
+    function renderTurnstile(){
+      if(!TS_SITEKEY || tsWidgetId!==null) return;
+      if(typeof turnstile==="undefined"){ setTimeout(renderTurnstile, 300); return; }
+      try{ tsWidgetId=turnstile.render("#tsWidget",{sitekey:TS_SITEKEY,theme:"light"}); }catch(e){}
+    }
+    function tsToken(){ try{ return (tsWidgetId!==null && typeof turnstile!=="undefined") ? turnstile.getResponse(tsWidgetId) : ""; }catch(e){ return ""; } }
+    function tsReset(){ try{ if(tsWidgetId!==null) turnstile.reset(tsWidgetId); }catch(e){} }
 
     el("detForm").addEventListener("submit", function(e){
       e.preventDefault();
@@ -280,14 +296,16 @@
       var btn=el("confirmBtn"); var orig=btn.innerHTML;
       var payload={ service:state.service.id, date:state.date, start:state.slot,
         name:el("fName").value.trim(), phone:el("fPhone").value.trim(),
-        email:el("fEmail").value.trim(), notes:el("fNotes").value.trim() };
+        email:el("fEmail").value.trim(), notes:el("fNotes").value.trim(),
+        company:el("fCompany").value, turnstileToken:tsToken() };
       if(!payload.name||!payload.phone){ msg.textContent="Please enter your name and phone."; msg.classList.remove("hide"); return; }
+      if(TS_SITEKEY && !payload.turnstileToken){ msg.textContent="Please complete the verification below."; msg.classList.remove("hide"); return; }
       btn.disabled=true; btn.innerHTML='<span class="spin"></span>';
       fetch(API+"/api/book",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
         .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d}})})
         .then(function(res){
           btn.disabled=false; btn.innerHTML=orig;
-          if(!res.ok){ msg.textContent=res.d.error||"Something went wrong. Please try again."; msg.classList.remove("hide");
+          if(!res.ok){ msg.textContent=res.d.error||"Something went wrong. Please try again."; msg.classList.remove("hide"); tsReset();
             if(res.d.error && /taken|available/i.test(res.d.error)){ /* slot gone: nudge back to times */ } return; }
           el("confMsg").textContent="We've booked "+res.d.service+" for "+res.d.name+".";
           el("confSummary").innerHTML=

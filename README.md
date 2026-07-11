@@ -62,6 +62,13 @@ kapabeauty.com/
 └── hugo.toml                     # Site configuration
 ```
 
+## Booking backend
+
+The `/book/` page's booking system (availability, bookings, admin, anti-spam)
+runs on a Cloudflare Worker + D1 database. That code lives in a **separate
+private repo** (`alisade/labelle-booking`), not here. This site only needs the
+deployed Worker URL, set as `bookingApiURL` in `data/studio.yaml`.
+
 ## Deployment
 
 The site auto-deploys to GitHub Pages via GitHub Actions on every push to
