@@ -4,6 +4,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Embed mode: when opened inside the home-page modal (?embed), hide the
+       banner/hero/back so only the booking flow shows. Runs before paint. -->
+  <script>if(/[?&]embed\b/.test(location.search))document.documentElement.className+=" embed";</script>
   <title>Book an appointment - {{ $s.name }}</title>
   <meta name="description" content="Book your appointment at {{ $s.name }}.">
   <meta name="robots" content="noindex">
@@ -98,6 +101,10 @@
     .confirm p{color:var(--muted);font-size:15px}
     .spin{width:20px;height:20px;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;border-radius:50%;display:inline-block;animation:sp .7s linear infinite}
     @keyframes sp{to{transform:rotate(360deg)}}
+    /* ---------- Embed (inside the home-page modal) ---------- */
+    html.embed body { background: #f6efe7; }
+    html.embed .banner, html.embed .hero, html.embed .back { display: none; }
+    html.embed .wrap { padding-top: 14px; padding-bottom: 24px; }
   </style>
 </head>
 <body>

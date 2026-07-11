@@ -229,6 +229,47 @@
     }
     .tb-book:hover { opacity: .93; }
     @media (prefers-reduced-motion: reduce) { .topbar { transition: none; } }
+
+    /* ---------- Booking modal (single-page overlay) ---------- */
+    .bookmodal { position: fixed; inset: 0; z-index: 200; display: none; }
+    .bookmodal.open { display: block; }
+    .bookmodal-backdrop {
+      position: absolute; inset: 0; background: rgba(46, 40, 35, .5);
+      opacity: 0; transition: opacity .25s ease; -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+    }
+    .bookmodal.open .bookmodal-backdrop { opacity: 1; }
+    .bookmodal-panel {
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%, -46%);
+      width: min(620px, 96vw); height: min(760px, 92vh);
+      background: #f6efe7; border-radius: 20px; overflow: hidden;
+      box-shadow: 0 24px 60px rgba(46, 40, 35, .3);
+      opacity: 0; transition: opacity .25s ease, transform .25s ease;
+      display: flex; flex-direction: column;
+    }
+    .bookmodal.open .bookmodal-panel { opacity: 1; transform: translate(-50%, -50%); }
+    .bookmodal-head {
+      flex: 0 0 auto; display: flex; align-items: center; gap: 10px;
+      padding: 13px 16px; border-bottom: 1px solid var(--line); background: var(--card);
+    }
+    .bookmodal-title { flex: 1; font-family: var(--serif); font-size: 18px; font-weight: 600; color: var(--ink); }
+    .bookmodal-x {
+      flex: 0 0 auto; width: 34px; height: 34px; border: 0; border-radius: 50%;
+      background: #efe6d9; color: var(--ink); font-size: 22px; line-height: 1; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .bookmodal-x:hover { background: #e7dccd; }
+    .bookmodal-frame { flex: 1; width: 100%; border: 0; background: #f6efe7; }
+    body.modal-open { overflow: hidden; }
+    @media (max-width: 600px) {
+      .bookmodal-panel {
+        left: 0; top: auto; bottom: 0; transform: translateY(6%);
+        width: 100%; height: 94vh; border-radius: 20px 20px 0 0;
+      }
+      .bookmodal.open .bookmodal-panel { transform: translateY(0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .bookmodal-backdrop, .bookmodal-panel { transition: none; }
+    }
   </style>
 </head>
 <body>
@@ -367,9 +408,68 @@
 
   </main>
 
+  <!-- Booking modal: opens /book in an isolated iframe overlay (single-page feel) -->
+  <div id="bookModal" class="bookmodal" aria-hidden="true">
+    <div class="bookmodal-backdrop" data-close></div>
+    <div class="bookmodal-panel" role="dialog" aria-modal="true" aria-label="Book an appointment">
+      <div class="bookmodal-head">
+        <span class="bookmodal-title">Book an appointment</span>
+        <button class="bookmodal-x" type="button" data-close aria-label="Close booking">&times;</button>
+      </div>
+      <iframe id="bookFrame" class="bookmodal-frame" title="Book an appointment" src="about:blank" loading="lazy"></iframe>
+    </div>
+  </div>
+
   <script>
   (function () {
+    var modal = document.getElementById('bookModal');
+    var frame = document.getElementById('bookFrame');
+    var open = false;
+
+    function bookHrefToEmbed(href) {
+      var a = document.createElement('a'); a.href = href;         // resolve
+      var svc = (a.search.match(/[?&]service=([^&]+)/) || [])[1];
+      return '/book/?embed=1' + (svc ? '&service=' + svc : '');
+    }
+    function openModal(href, push) {
+      frame.src = bookHrefToEmbed(href);
+      modal.classList.add('open'); modal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('modal-open');
+      open = true;
+      if (push) history.pushState({ lbModal: 1 }, '', href);
+      var x = modal.querySelector('.bookmodal-x'); if (x) x.focus();
+    }
+    function closeModal(fromPop) {
+      if (!open) return;
+      modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('modal-open');
+      open = false;
+      setTimeout(function () { if (!open) frame.src = 'about:blank'; }, 260);
+      // Keep the URL in sync: user-initiated close pops the pushed /book state.
+      if (!fromPop && history.state && history.state.lbModal) history.back();
+    }
+
+    // Intercept any link that points at /book/ -> open the modal instead of navigating.
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a');
+      if (!a) return;
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      if (a.target && a.target !== '' && a.target !== '_self') return;
+      if (a.pathname !== '/book/' || a.host !== location.host) return;
+      e.preventDefault();
+      openModal(a.getAttribute('href') || '/book/', !open);  // push only when first opening
+    });
+
+    // Close: backdrop / X and Escape hide immediately (and sync history);
+    // browser Back closes via popstate.
+    modal.addEventListener('click', function (e) { if (e.target.hasAttribute('data-close')) closeModal(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && open) closeModal(false); });
+    window.addEventListener('popstate', function () { closeModal(true); });
+  })();
+
+  (function () {
     var bar = document.getElementById('topbar');
+    var target = document.querySelector('.avatar');
     var target = document.querySelector('.avatar');
     if (!bar || !target) return;
     function set(on) { bar.classList.toggle('show', on); bar.setAttribute('aria-hidden', on ? 'false' : 'true'); }
