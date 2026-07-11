@@ -39,7 +39,7 @@ instagram: "https://instagram.com/labellenailstudio"
 #   3. bookingHostedURL: optional fallback contact/booking link shown only if
 #      the API is unset or unreachable.
 # ---------------------------------------------------------------------------
-bookingApiURL: ""
+bookingApiURL: "https://labelle-booking.kapabeautyinc.workers.dev"
 bookingURL: "/book/"
 bookingHostedURL: "https://www.fresha.com/"
 
