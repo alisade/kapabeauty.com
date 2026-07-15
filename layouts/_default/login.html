@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  {{ with $s.bookingTurnstileSiteKey }}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad&render=explicit" async defer></script>{{ end }}
   <style>
     :root{
       --bg-top:#f6efe7;--bg-bottom:#e9ddcf;--card:#fffdfb;--ink:#2e2823;--muted:#8a7f72;
@@ -29,9 +30,13 @@
     label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:0 0 5px}
     input{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:11px;font:inherit;font-size:16px;background:#fff;color:var(--ink);margin-bottom:13px}
     input:focus{outline:none;border-color:var(--accent)}
+    .cf{margin:2px 0 13px}
+    .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
     .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px 20px;background:var(--accent);color:var(--accent-ink);border:0;border-radius:11px;font:inherit;font-weight:600;font-size:15px;cursor:pointer}
     .btn:hover{opacity:.93}.btn[disabled]{opacity:.55;cursor:not-allowed}
     .msg{font-size:14px;text-align:center;padding:8px 0 0}.msg.err{color:var(--err)}.msg.ok{color:var(--ok)}
+    .linkrow{text-align:center;margin-top:14px}
+    .linkrow a{color:var(--muted);font-size:13px;text-decoration:none;cursor:pointer}.linkrow a:hover{color:var(--ink)}
     .foot{text-align:center;margin-top:18px}.foot a{color:var(--muted);font-size:13px;text-decoration:none}.foot a:hover{color:var(--ink)}
     .tick{width:52px;height:52px;border-radius:50%;background:var(--ok);color:#fff;display:flex;align-items:center;justify-content:center;margin:2px auto 14px}
     .center{text-align:center}
@@ -47,7 +52,7 @@
       <div class="tagline">Team sign in</div>
     </header>
 
-    <!-- login form -->
+    <!-- login -->
     <div class="card" id="loginCard">
       <div class="h">Sign in</div>
       <div class="sub">For studio staff and administrators.</div>
@@ -56,12 +61,51 @@
         <input type="text" id="login" autocomplete="username" autocapitalize="none" spellcheck="false" required>
         <label for="password">Password</label>
         <input type="password" id="password" autocomplete="current-password" required>
+        {{ with $s.bookingTurnstileSiteKey }}<div class="cf"><div id="ts-login"></div></div>{{ end }}
         <button class="btn" id="loginBtn" type="submit">Sign in</button>
         <div id="loginMsg" class="msg err hide"></div>
       </form>
+      <div class="linkrow"><a id="toForgot">Forgot password?</a></div>
     </div>
 
-    <!-- forced password reset -->
+    <!-- forgot password -->
+    <div class="card hide" id="forgotCard">
+      <div class="h">Reset your password</div>
+      <div class="sub">Enter your login and we'll email you a reset link.</div>
+      <form id="forgotForm" novalidate>
+        <label for="fLogin">Email or username</label>
+        <input type="text" id="fLogin" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+        <div class="hp" aria-hidden="true"><label>Company<input type="text" id="fCompany" tabindex="-1" autocomplete="off"></label></div>
+        {{ with $s.bookingTurnstileSiteKey }}<div class="cf"><div id="ts-forgot"></div></div>{{ end }}
+        <button class="btn" id="forgotBtn" type="submit">Send reset link</button>
+        <div id="forgotMsg" class="msg err hide"></div>
+      </form>
+      <div class="linkrow"><a id="toLogin">&larr; Back to sign in</a></div>
+    </div>
+
+    <!-- forgot: sent -->
+    <div class="card center hide" id="forgotSent">
+      <div class="tick"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="h">Check your email</div>
+      <p class="sub" style="margin-top:6px">If an account matches that login, we've sent a password-reset link. It expires shortly, so use it soon.</p>
+      <div class="linkrow"><a id="toLogin2">&larr; Back to sign in</a></div>
+    </div>
+
+    <!-- reset via emailed link (?reset=token) -->
+    <div class="card hide" id="resetLinkCard">
+      <div class="h">Set a new password</div>
+      <div class="sub">Choose a new password for your account.</div>
+      <form id="resetLinkForm" novalidate>
+        <label for="rlp">New password</label>
+        <input type="password" id="rlp" autocomplete="new-password" required>
+        <label for="rlp2">Confirm new password</label>
+        <input type="password" id="rlp2" autocomplete="new-password" required>
+        <button class="btn" id="resetLinkBtn" type="submit">Save password</button>
+        <div id="resetLinkMsg" class="msg err hide"></div>
+      </form>
+    </div>
+
+    <!-- forced password reset (after first login) -->
     <div class="card hide" id="resetCard">
       <div class="h">Set a new password</div>
       <div class="sub">Choose a new password to finish signing in.</div>
@@ -89,38 +133,89 @@
   <script>
   (function(){
     var API="{{ $s.bookingApiURL }}".replace(/\/+$/,"");
+    var SITEKEY="{{ $s.bookingTurnstileSiteKey }}";
     var el=function(id){return document.getElementById(id)};
-    var pendingPassword=""; // remembered from the login form to satisfy the reset's "current"
+    var pendingPassword="";
+    var resetLinkToken=(new URLSearchParams(location.search)).get("reset")||"";
+    var tsLogin=null, tsForgot=null;
+
+    window.onTurnstileLoad=function(){
+      if(!SITEKEY||!window.turnstile) return;
+      if(el("ts-login")&&tsLogin==null) tsLogin=turnstile.render("#ts-login",{sitekey:SITEKEY});
+    };
+    function tsToken(id){ return (SITEKEY&&window.turnstile&&id!=null)?turnstile.getResponse(id):""; }
+    function tsReset(id){ if(SITEKEY&&window.turnstile&&id!=null){ try{turnstile.reset(id);}catch(e){} } }
 
     function err(box,t){ box.textContent=t; box.className="msg err"; }
     function clr(box){ box.className="msg err hide"; }
-    function show(card){ ["loginCard","resetCard","staffCard"].forEach(function(c){ el(c).classList.toggle("hide", c!==card); }); }
+    var CARDS=["loginCard","forgotCard","forgotSent","resetLinkCard","resetCard","staffCard"];
+    function show(card){ CARDS.forEach(function(c){ el(c).classList.toggle("hide", c!==card); }); }
 
-    function routeAfterAuth(role){
-      // The session is an HttpOnly cookie set by the API (same-site) -- nothing to
-      // store in JS. /admin detects the cookie via /api/auth/me on load.
-      if(role==="admin"){ location.href="/admin/"; }
-      else { show("staffCard"); }
-    }
+    function routeAfterAuth(role){ if(role==="admin"){ location.href="/admin/"; } else { show("staffCard"); } }
 
+    // If arrived via an emailed reset link, show that flow first.
+    if(resetLinkToken){ show("resetLinkCard"); }
+
+    // ---- login ----
     el("loginForm").addEventListener("submit",function(e){
       e.preventDefault(); clr(el("loginMsg"));
       var login=el("login").value.trim(), password=el("password").value;
       if(!login||!password){ err(el("loginMsg"),"Enter your login and password."); return; }
       var btn=el("loginBtn"), o=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spin"></span>';
-      fetch(API+"/api/auth/login",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({login:login,password:password})})
+      fetch(API+"/api/auth/login",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({login:login,password:password,turnstileToken:tsToken(tsLogin)})})
+        .then(function(r){ return r.json().then(function(d){return {ok:r.ok,d:d}}); })
+        .then(function(res){
+          btn.disabled=false; btn.innerHTML=o; tsReset(tsLogin);
+          if(!res.ok){ err(el("loginMsg"), res.d.error||"Sign in failed."); return; }
+          window.__session={role:res.d.role}; pendingPassword=password;
+          if(res.d.must_reset){ show("resetCard"); } else { routeAfterAuth(res.d.role); }
+        })
+        .catch(function(){ btn.disabled=false; btn.innerHTML=o; tsReset(tsLogin); err(el("loginMsg"),"Network error. Please try again."); });
+    });
+
+    // ---- forgot ----
+    el("toForgot").onclick=function(){
+      show("forgotCard");
+      if(SITEKEY&&window.turnstile&&tsForgot==null) tsForgot=turnstile.render("#ts-forgot",{sitekey:SITEKEY});
+    };
+    el("toLogin").onclick=function(){ show("loginCard"); };
+    el("toLogin2").onclick=function(){ show("loginCard"); };
+    el("forgotForm").addEventListener("submit",function(e){
+      e.preventDefault(); clr(el("forgotMsg"));
+      var login=el("fLogin").value.trim();
+      if(!login){ err(el("forgotMsg"),"Enter your login."); return; }
+      var btn=el("forgotBtn"), o=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spin"></span>';
+      fetch(API+"/api/auth/forgot",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({login:login,company:el("fCompany").value,turnstileToken:tsToken(tsForgot)})})
+        .then(function(r){ return r.json().then(function(d){return {ok:r.ok,d:d}}); })
+        .then(function(res){
+          btn.disabled=false; btn.innerHTML=o; tsReset(tsForgot);
+          if(!res.ok){ err(el("forgotMsg"), res.d.error||"Could not send the reset link."); return; }
+          show("forgotSent");
+        })
+        .catch(function(){ btn.disabled=false; btn.innerHTML=o; tsReset(tsForgot); err(el("forgotMsg"),"Network error. Please try again."); });
+    });
+
+    // ---- reset via emailed link ----
+    el("resetLinkForm").addEventListener("submit",function(e){
+      e.preventDefault(); clr(el("resetLinkMsg"));
+      var np=el("rlp").value, np2=el("rlp2").value;
+      if(np.length<8){ err(el("resetLinkMsg"),"New password must be at least 8 characters."); return; }
+      if(np!==np2){ err(el("resetLinkMsg"),"Passwords do not match."); return; }
+      var btn=el("resetLinkBtn"), o=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spin"></span>';
+      fetch(API+"/api/auth/reset",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:resetLinkToken,next:np})})
         .then(function(r){ return r.json().then(function(d){return {ok:r.ok,d:d}}); })
         .then(function(res){
           btn.disabled=false; btn.innerHTML=o;
-          if(!res.ok){ err(el("loginMsg"), res.d.error||"Sign in failed."); return; }
-          window.__session={role:res.d.role};
-          pendingPassword=password;
-          if(res.d.must_reset){ show("resetCard"); }
-          else { routeAfterAuth(res.d.role); }
+          if(!res.ok){ err(el("resetLinkMsg"), res.d.error||"Could not set password."); return; }
+          // Clear the ?reset= token from the URL, then send them to sign in fresh.
+          history.replaceState(null,"",location.pathname);
+          resetLinkToken=""; show("loginCard");
+          clr(el("loginMsg")); el("loginMsg").textContent="Password updated -- please sign in."; el("loginMsg").className="msg ok";
         })
-        .catch(function(){ btn.disabled=false; btn.innerHTML=o; err(el("loginMsg"),"Network error. Please try again."); });
+        .catch(function(){ btn.disabled=false; btn.innerHTML=o; err(el("resetLinkMsg"),"Network error. Please try again."); });
     });
 
+    // ---- forced reset (after first login, session cookie set) ----
     el("resetForm").addEventListener("submit",function(e){
       e.preventDefault(); clr(el("resetMsg"));
       var np=el("np").value, np2=el("np2").value;

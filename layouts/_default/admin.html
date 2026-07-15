@@ -443,7 +443,8 @@
           '<div class="fld wide"><label>Email or username</label><input class="a-login" autocapitalize="none"></div>'+
           '<div class="fld"><label>Role</label><select class="a-role"><option value="staff">Staff</option><option value="admin">Admin</option></select></div>'+
           '<div class="fld"><label>Staff ID (optional)</label><input class="a-staff" placeholder="links to a technician"></div>'+
-          '<div class="fld wide"><label>Temp password (optional)</label><input class="a-pass" placeholder="leave blank to auto-generate"></div>'+
+          '<div class="fld"><label>Recovery email (optional)</label><input class="a-email" autocapitalize="none" placeholder="for password resets"></div>'+
+          '<div class="fld"><label>Temp password (optional)</label><input class="a-pass" placeholder="leave blank to auto-generate"></div>'+
         '</div>'+
         '<div class="rowbtns"><button class="btn a-create">Create login</button><span class="a-msg"></span></div>'+
         '<div class="a-temp savedok" style="margin-top:8px;word-break:break-all"></div>';
@@ -451,7 +452,7 @@
       q(".a-create").onclick=function(){
         var login=q(".a-login").value.trim();
         if(!login){ setRowMsg(q(".a-msg"),"Login required",true); return; }
-        var payload={login:login, role:q(".a-role").value, staff_id:q(".a-staff").value.trim()||undefined, password:q(".a-pass").value||undefined};
+        var payload={login:login, role:q(".a-role").value, staff_id:q(".a-staff").value.trim()||undefined, email:q(".a-email").value.trim()||undefined, password:q(".a-pass").value||undefined};
         postAdmin("/api/admin/accounts",payload,q(".a-create"),q(".a-msg"),function(res){
           q(".a-login").value=""; q(".a-staff").value=""; q(".a-pass").value="";
           q(".a-temp").textContent=(res&&res.tempPassword)?("Temp password for "+res.login+":  "+res.tempPassword+"   (share it securely; they set their own on first login)"):"";
@@ -468,10 +469,13 @@
     }
     function acctRow(a){
       var row=document.createElement("div"); row.className="sub"+(a.active?"":" unsub");
+      var locked=a.locked_until && (new Date(a.locked_until).getTime()>Date.now());
       var badges=(a.role==="admin"?'<span class="badge" style="color:var(--accent);border:1px solid var(--line)">admin</span>':'')+
         (a.must_reset?'<span class="badge" style="color:#9a7b25;border:1px solid #e6d9b0">must reset</span>':'')+
+        (locked?'<span class="badge off">locked</span>':'')+
         (a.active?'':'<span class="badge off">inactive</span>');
-      row.innerHTML='<div class="em">'+esc(a.login)+' '+badges+(a.staff_id?('<div class="nm">staff: '+esc(a.staff_id)+'</div>'):'')+'</div>'+
+      var meta=[]; if(a.staff_id) meta.push("staff: "+esc(a.staff_id)); if(a.email && a.email!==a.login) meta.push(esc(a.email));
+      row.innerHTML='<div class="em">'+esc(a.login)+' '+badges+(meta.length?('<div class="nm">'+meta.join(" &middot; ")+'</div>'):'')+'</div>'+
         '<div class="rowbtns" style="margin:0"><button class="btn ghost sm a-reset">Reset</button>'+
         (a.active?'<button class="btn danger a-deact">Deactivate</button>':'')+'<span class="a-rmsg"></span></div>';
       var q=function(sel){return row.querySelector(sel)};
