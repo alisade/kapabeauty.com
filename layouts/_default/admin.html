@@ -126,6 +126,7 @@
       <button class="btn ghost tab-on" id="tabBookings">Bookings</button>
       <button class="btn ghost" id="tabSignups">Signups</button>
       <button class="btn ghost" id="tabSetup">Setup</button>
+      <button class="btn ghost" id="tabTechs">Technicians</button>
       <button class="btn ghost" id="tabAccounts">Accounts</button>
     </div>
 
@@ -152,11 +153,18 @@
       <span class="muted">Changes go live within ~1 minute.</span>
     </div>
 
+    <!-- technicians toolbar -->
+    <div class="toolbar hide" id="techToolbar">
+      <button class="btn ghost" id="techReload">Refresh</button>
+      <span class="grow"></span>
+      <span class="muted">The salon's service providers</span>
+    </div>
+
     <!-- accounts toolbar -->
     <div class="toolbar hide" id="acctToolbar">
       <button class="btn ghost" id="acctReload">Refresh</button>
       <span class="grow"></span>
-      <span class="muted">Staff &amp; admin logins for /login</span>
+      <span class="muted">Technician &amp; admin logins for /login</span>
     </div>
 
     <div id="msg" class="msg"></div>
@@ -297,15 +305,18 @@
       el("tabBookings").classList.toggle("tab-on", which==="bookings");
       el("tabSignups").classList.toggle("tab-on", which==="signups");
       el("tabSetup").classList.toggle("tab-on", which==="setup");
+      el("tabTechs").classList.toggle("tab-on", which==="techs");
       el("tabAccounts").classList.toggle("tab-on", which==="accounts");
       el("toolbar").classList.toggle("hide", which!=="bookings");
       el("subToolbar").classList.toggle("hide", which!=="signups");
       el("setupToolbar").classList.toggle("hide", which!=="setup");
+      el("techToolbar").classList.toggle("hide", which!=="techs");
       el("acctToolbar").classList.toggle("hide", which!=="accounts");
       el("list").innerHTML=""; setMsg("");
       if(which==="bookings") load(el("dateFilter").value||undefined);
       else if(which==="signups") loadSubs();
       else if(which==="setup") loadSetup();
+      else if(which==="techs") loadTechs();
       else loadAccounts();
     }
 
@@ -314,7 +325,7 @@
     function minToTime(m){ if(m==null||m==="") return ""; var h=Math.floor(m/60),mm=m%60; return String(h).padStart(2,"0")+":"+String(mm).padStart(2,"0"); }
     function timeToMin(t){ if(!t) return null; var p=t.split(":"); return (+p[0])*60+(+p[1]); }
     function centsToStr(c){ return (c==null||c==="")?"":(c/100).toFixed(2); }
-    function setRowMsg(elm,txt,err){ elm.textContent=txt; elm.className=err?"":"savedok"; elm.style.color=err?"var(--err)":""; }
+    function setRowMsg(elm,txt,err){ if(!elm)return; elm.textContent=txt; elm.className=err?"":"savedok"; elm.style.color=err?"var(--err)":""; }
     function postAdmin(p,payload,btn,msgEl,done){
       var orig=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spin" style="border-top-color:var(--muted)"></span>';
       authFetch(api()+p,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
@@ -424,36 +435,151 @@
       return wrap;
     }
 
+    // ---- technicians (T01) ----
+    var ALLSERVICES=[], TECHLIST=[];
+    function loadTechs(){
+      if(!api()||!authed()){ el("cfgMsg").textContent="Sign in with your account, or paste an admin token."; el("cfgMsg").style.color="var(--err)"; return; }
+      setMsg("Loading technicians...");
+      Promise.all([
+        authFetch(api()+"/api/config").then(function(r){return r.json()}),
+        authFetch(api()+"/api/admin/technicians").then(function(r){ if(r.status===401) throw new Error("Unauthorized -- sign in again or check the admin token."); if(!r.ok) throw new Error("Request failed ("+r.status+")."); return r.json(); })
+      ]).then(function(res){ setMsg(""); ALLSERVICES=res[0].services||[]; TECHLIST=res[1].technicians||[]; renderTechs(TECHLIST); })
+        .catch(function(e){ setMsg(e.message||"Could not load technicians.", true); el("list").innerHTML=""; });
+    }
+    function renderTechs(techs){
+      var list=el("list"); list.innerHTML="";
+      var add=document.createElement("div"); add.className="card setup-sec"; add.style.padding="16px";
+      add.innerHTML='<h3 style="font-family:var(--serif);font-size:20px;font-weight:600;margin-bottom:10px">Add technician</h3>'+
+        '<div class="fgrid"><div class="fld wide"><label>Name</label><input class="t-name"></div>'+
+        '<div class="fld wide"><label>Short bio (optional)</label><input class="t-bio"></div></div>'+
+        '<div class="rowbtns"><button class="btn t-add">Add technician</button><span class="t-amsg"></span></div>';
+      add.querySelector(".t-add").onclick=function(){
+        var name=add.querySelector(".t-name").value.trim();
+        if(!name){ setRowMsg(add.querySelector(".t-amsg"),"Name required",true); return; }
+        postAdmin("/api/admin/technician",{name:name,bio:add.querySelector(".t-bio").value.trim()||undefined,sort:techs.length+1},add.querySelector(".t-add"),add.querySelector(".t-amsg"),function(){ loadTechs(); });
+      };
+      list.appendChild(add);
+      if(!techs.length){ var e=document.createElement("div"); e.className="card empty"; e.textContent="No technicians yet. With none, booking works as a single chair (like today). Add one above to go multi-technician."; list.appendChild(e); return; }
+      techs.forEach(function(t){ list.appendChild(techCard(t)); });
+    }
+    function techCard(t){
+      var card=document.createElement("div"); card.className="card setup-sec"; if(!t.active) card.style.opacity=".6";
+      var loginLine=t.login?('<span class="badge" style="color:var(--accent);border:1px solid var(--line)">login: '+esc(t.login)+'</span>'):'<button class="btn ghost sm t-login">Create login</button>';
+      card.innerHTML=
+        '<div style="padding:16px 16px 4px"><h3>'+esc(t.name)+(t.active?'':' <span class="badge off">inactive</span>')+'</h3></div>'+
+        '<div style="padding:0 16px 16px">'+
+          '<div class="fgrid">'+
+            '<div class="fld wide"><label>Name</label><input class="t-name" value="'+esc(t.name)+'"></div>'+
+            '<div class="fld wide"><label>Short bio</label><input class="t-bio" value="'+esc(t.bio||"")+'"></div>'+
+            '<div class="fld"><label>Photo URL (optional)</label><input class="t-photo" value="'+esc(t.photo_url||"")+'"></div>'+
+            '<div class="fld"><label>Sort</label><input class="t-sort" type="number" value="'+(t.sort||0)+'"></div>'+
+          '</div>'+
+          '<div class="rowbtns"><button class="btn t-save">Save</button>'+(t.active?'<button class="btn danger t-del">Deactivate</button>':'<button class="btn ghost sm t-react">Reactivate</button>')+'<span class="t-loginwrap">'+loginLine+'</span><span class="t-msg"></span></div>'+
+          '<div style="margin-top:14px"><label style="font-size:12px;font-weight:600;color:var(--muted)">Services performed <span style="font-weight:400">(none checked = all services)</span></label><div class="t-svcs" style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px"></div></div>'+
+          '<div style="margin-top:14px"><label style="font-size:12px;font-weight:600;color:var(--muted)">Working hours <span style="font-weight:400">(unchecked = studio default)</span></label><div class="t-hours"></div></div>'+
+          '<div style="margin-top:14px"><label style="font-size:12px;font-weight:600;color:var(--muted)">Time off</label><div class="t-off"></div>'+
+            '<div class="hrow" style="border:0;padding:8px 0"><input type="date" class="to-date"><input type="time" class="to-start" title="start (optional)"><input type="time" class="to-end" title="end (optional)"><input class="to-reason" placeholder="reason" style="flex:1;min-width:90px;border:1px solid var(--line);border-radius:8px;padding:8px 9px;font:inherit;font-size:14px"><button class="btn ghost sm to-add">Add</button></div>'+
+          '</div>'+
+        '</div>';
+      var q=function(s){return card.querySelector(s)};
+      q(".t-save").onclick=function(){
+        if(!q(".t-name").value.trim()){ setRowMsg(q(".t-msg"),"Name required",true); return; }
+        postAdmin("/api/admin/technician",{id:t.id,name:q(".t-name").value.trim(),bio:q(".t-bio").value.trim()||undefined,photo_url:q(".t-photo").value.trim()||undefined,sort:parseInt(q(".t-sort").value,10)||0,active:!!t.active},q(".t-save"),q(".t-msg"),null);
+      };
+      if(q(".t-del")) q(".t-del").onclick=function(){ if(!confirm("Deactivate "+t.name+"? Existing bookings keep their history."))return; postAdmin("/api/admin/technician/delete",{id:t.id},q(".t-del"),q(".t-msg"),function(){ loadTechs(); }); };
+      if(q(".t-react")) q(".t-react").onclick=function(){ postAdmin("/api/admin/technician",{id:t.id,name:t.name,bio:t.bio,photo_url:t.photo_url,sort:t.sort,active:true},q(".t-react"),q(".t-msg"),function(){ loadTechs(); }); };
+      if(q(".t-login")) q(".t-login").onclick=function(){
+        var email=prompt("Email for "+t.name+"'s login:"); if(!email) return;
+        postAdmin("/api/admin/accounts",{login:email.trim(),role:"technician",technician_id:t.id},q(".t-login"),q(".t-msg"),function(res){
+          if(res&&res.tempPassword) alert("Login created for "+t.name+"\n\nEmail: "+res.login+"\nTemp password: "+res.tempPassword+"\n\nThey set their own password on first sign-in at /login.");
+          loadTechs();
+        });
+      };
+      var svcWrap=q(".t-svcs");
+      ALLSERVICES.forEach(function(s){
+        var checked=(t.service_ids||[]).indexOf(s.id)>=0;
+        var lbl=document.createElement("label"); lbl.style.cssText="display:flex;gap:5px;align-items:center;font-size:13px;color:var(--ink)";
+        lbl.innerHTML='<input type="checkbox" value="'+esc(s.id)+'"'+(checked?' checked':'')+'> '+esc(s.label);
+        svcWrap.appendChild(lbl);
+      });
+      svcWrap.addEventListener("change",function(){
+        var ids=[]; svcWrap.querySelectorAll("input:checked").forEach(function(c){ ids.push(c.value); });
+        postAdmin("/api/admin/technician/services",{id:t.id,service_ids:ids},q(".t-save"),q(".t-msg"),null);
+      });
+      var hoursWrap=q(".t-hours");
+      for(var wd=0; wd<=6; wd++) hoursWrap.appendChild(techHoursRow(t, wd));
+      var offWrap=q(".t-off");
+      (t.timeoff||[]).forEach(function(o){ offWrap.appendChild(techOffRow(t,o)); });
+      q(".to-add").onclick=function(){
+        var d=q(".to-date").value; if(!d){ setRowMsg(q(".t-msg"),"Pick a date for time off",true); return; }
+        var payload={id:t.id,date:d,reason:q(".to-reason").value.trim()||undefined};
+        if(q(".to-start").value) payload.start_min=timeToMin(q(".to-start").value);
+        if(q(".to-end").value) payload.end_min=timeToMin(q(".to-end").value);
+        postAdmin("/api/admin/technician/timeoff",payload,q(".to-add"),q(".t-msg"),function(){ loadTechs(); });
+      };
+      return card;
+    }
+    function techHoursRow(t, wd){
+      var custom=t.hours&&t.hours[wd]; var open=custom?t.hours[wd][0]:null, close=custom?t.hours[wd][1]:null;
+      var closed=custom&&(open==null||close==null);
+      var row=document.createElement("div"); row.className="hrow"; row.style.padding="7px 0"; row.style.border="0";
+      row.innerHTML='<label class="cl" style="margin:0;flex:0 0 118px"><input type="checkbox" class="h-custom"'+(custom?' checked':'')+'> '+DOWSHORT[wd]+' custom</label>'+
+        '<input type="time" class="h-open" value="'+minToTime(open)+'"'+((!custom||closed)?' disabled':'')+'><span class="muted">to</span><input type="time" class="h-close" value="'+minToTime(close)+'"'+((!custom||closed)?' disabled':'')+'>'+
+        '<label class="cl"><input type="checkbox" class="h-closed"'+(closed?' checked':'')+(custom?'':' disabled')+'> Closed</label>'+
+        '<button class="btn ghost sm h-save">Save</button><span class="h-msg"></span>';
+      var q=function(s){return row.querySelector(s)};
+      function sync(){ var c=q(".h-custom").checked; var cl=q(".h-closed").checked; q(".h-closed").disabled=!c; q(".h-open").disabled=!c||cl; q(".h-close").disabled=!c||cl; }
+      q(".h-custom").onchange=sync; q(".h-closed").onchange=sync;
+      q(".h-save").onclick=function(){
+        if(!q(".h-custom").checked){ postAdmin("/api/admin/technician/hours",{id:t.id,weekday:wd,inherit:true},q(".h-save"),q(".h-msg"),null); return; }
+        if(q(".h-closed").checked){ postAdmin("/api/admin/technician/hours",{id:t.id,weekday:wd,closed:true},q(".h-save"),q(".h-msg"),null); return; }
+        if(!q(".h-open").value||!q(".h-close").value){ setRowMsg(q(".h-msg"),"Set times",true); return; }
+        postAdmin("/api/admin/technician/hours",{id:t.id,weekday:wd,open_min:timeToMin(q(".h-open").value),close_min:timeToMin(q(".h-close").value)},q(".h-save"),q(".h-msg"),null);
+      };
+      return row;
+    }
+    function techOffRow(t,o){
+      var row=document.createElement("div"); row.className="sub"; row.style.padding="8px 0";
+      var when=o.date+((o.start_min!=null&&o.end_min!=null)?(" "+minLabel(o.start_min)+"-"+minLabel(o.end_min)):" (all day)");
+      row.innerHTML='<div class="em" style="font-weight:500;font-size:13px">'+esc(when)+(o.reason?(' <span class="muted">- '+esc(o.reason)+'</span>'):'')+'</div><button class="btn ghost sm o-del">Remove</button>';
+      row.querySelector(".o-del").onclick=function(){ postAdmin("/api/admin/technician/timeoff/delete",{timeoff_id:o.id},row.querySelector(".o-del"),null,function(){ loadTechs(); }); };
+      return row;
+    }
+
     // ---- accounts (T16) ----
     function loadAccounts(){
       if(!api()||!authed()){ el("cfgMsg").textContent="Sign in with your account, or paste an admin token."; el("cfgMsg").style.color="var(--err)"; return; }
       setMsg("Loading logins...");
-      authFetch(api()+"/api/admin/accounts").then(function(r){
-        if(r.status===401) throw new Error("Unauthorized -- check the admin token.");
-        if(!r.ok) throw new Error("Request failed ("+r.status+").");
-        return r.json();
-      }).then(function(d){ setMsg(""); renderAccounts(d); })
+      Promise.all([
+        authFetch(api()+"/api/admin/accounts").then(function(r){ if(r.status===401) throw new Error("Unauthorized -- sign in again or check the admin token."); if(!r.ok) throw new Error("Request failed ("+r.status+")."); return r.json(); }),
+        authFetch(api()+"/api/admin/technicians").then(function(r){ return r.ok?r.json():{technicians:[]}; })
+      ]).then(function(res){ setMsg(""); renderAccounts(res[0], (res[1].technicians||[]).filter(function(t){return t.active})); })
         .catch(function(e){ setMsg(e.message||"Could not load logins.", true); el("list").innerHTML=""; });
     }
-    function renderAccounts(d){
+    var TECHNAMES={};
+    function renderAccounts(d, techs){
       var list=el("list"); list.innerHTML="";
+      TECHNAMES={}; (techs||[]).forEach(function(t){ TECHNAMES[t.id]=t.name; });
+      var techOpts='<option value="">-- none (admin) --</option>'+(techs||[]).map(function(t){return '<option value="'+esc(t.id)+'">'+esc(t.name)+'</option>';}).join("");
       var c=document.createElement("div"); c.className="card setup-sec"; c.style.padding="16px";
       c.innerHTML='<h3 style="font-family:var(--serif);font-size:20px;font-weight:600;margin-bottom:10px">New login</h3>'+
         '<div class="fgrid">'+
           '<div class="fld wide"><label>Email</label><input class="a-login" type="email" autocapitalize="none" placeholder="name@email.com"></div>'+
-          '<div class="fld"><label>Role</label><select class="a-role"><option value="staff">Staff</option><option value="admin">Admin</option></select></div>'+
-          '<div class="fld"><label>Staff ID (optional)</label><input class="a-staff" placeholder="links to a technician"></div>'+
+          '<div class="fld"><label>Role</label><select class="a-role"><option value="technician">Technician</option><option value="admin">Admin</option></select></div>'+
+          '<div class="fld"><label>Technician</label><select class="a-tech">'+techOpts+'</select></div>'+
           '<div class="fld wide"><label>Temp password (optional)</label><input class="a-pass" placeholder="leave blank to auto-generate"></div>'+
         '</div>'+
         '<div class="rowbtns"><button class="btn a-create">Create login</button><span class="a-msg"></span></div>'+
         '<div class="a-temp savedok" style="margin-top:8px;word-break:break-all"></div>';
       var q=function(sel){return c.querySelector(sel)};
+      // keep the Technician dropdown relevant: only meaningful for the technician role
+      q(".a-role").onchange=function(){ q(".a-tech").disabled = q(".a-role").value==="admin"; if(q(".a-role").value==="admin") q(".a-tech").value=""; };
       q(".a-create").onclick=function(){
         var login=q(".a-login").value.trim();
-        if(!login){ setRowMsg(q(".a-msg"),"Login required",true); return; }
-        var payload={login:login, role:q(".a-role").value, staff_id:q(".a-staff").value.trim()||undefined, password:q(".a-pass").value||undefined};
+        if(!login){ setRowMsg(q(".a-msg"),"Email required",true); return; }
+        var payload={login:login, role:q(".a-role").value, technician_id:q(".a-tech").value||undefined, password:q(".a-pass").value||undefined};
         postAdmin("/api/admin/accounts",payload,q(".a-create"),q(".a-msg"),function(res){
-          q(".a-login").value=""; q(".a-staff").value=""; q(".a-pass").value="";
+          q(".a-login").value=""; q(".a-tech").value=""; q(".a-pass").value="";
           q(".a-temp").textContent=(res&&res.tempPassword)?("Temp password for "+res.login+":  "+res.tempPassword+"   (share it securely; they set their own on first login)"):"";
           loadAccounts();
         });
@@ -473,7 +599,7 @@
         (a.must_reset?'<span class="badge" style="color:#9a7b25;border:1px solid #e6d9b0">must reset</span>':'')+
         (locked?'<span class="badge off">locked</span>':'')+
         (a.active?'':'<span class="badge off">inactive</span>');
-      row.innerHTML='<div class="em">'+esc(a.login)+' '+badges+(a.staff_id?('<div class="nm">staff: '+esc(a.staff_id)+'</div>'):'')+'</div>'+
+      row.innerHTML='<div class="em">'+esc(a.login)+' '+badges+(a.technician_id?('<div class="nm">technician: '+esc(TECHNAMES[a.technician_id]||a.technician_id)+'</div>'):'')+'</div>'+
         '<div class="rowbtns" style="margin:0"><button class="btn ghost sm a-reset">Reset</button>'+
         (a.active?'<button class="btn danger a-deact">Deactivate</button>':'')+'<span class="a-rmsg"></span></div>';
       var q=function(sel){return row.querySelector(sel)};
@@ -494,10 +620,12 @@
     el("tabBookings").onclick=function(){ showTab("bookings"); };
     el("tabSignups").onclick=function(){ showTab("signups"); };
     el("tabSetup").onclick=function(){ showTab("setup"); };
+    el("tabTechs").onclick=function(){ showTab("techs"); };
     el("tabAccounts").onclick=function(){ showTab("accounts"); };
     el("subReload").onclick=function(){ loadSubs(); };
     el("subCsv").onclick=function(){ downloadCsv(); };
     el("setupReload").onclick=function(){ loadSetup(); };
+    el("techReload").onclick=function(){ loadTechs(); };
     el("acctReload").onclick=function(){ loadAccounts(); };
 
     el("loadBtn").onclick=function(){ load(el("dateFilter").value||undefined); };
