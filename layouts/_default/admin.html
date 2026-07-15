@@ -88,6 +88,10 @@
     .hrow input[type=time]{border:1px solid var(--line);border-radius:8px;padding:8px 9px;font:inherit;font-size:14px}
     .hrow label.cl{display:flex;gap:5px;align-items:center;color:var(--muted);font-size:13px;margin-left:auto}
     .savedok{color:var(--ok);font-size:13px;font-weight:600}
+    .peoplenav{display:flex;gap:8px;flex-wrap:wrap;padding:14px 16px;border-bottom:1px solid var(--line)}
+    .pchip{padding:7px 14px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+    .pchip:hover{border-color:var(--accent)}
+    .pchip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
     .hide{display:none}
     .spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;border-radius:50%;display:inline-block;animation:sp .7s linear infinite;vertical-align:-2px}
     @keyframes sp{to{transform:rotate(360deg)}}
@@ -425,7 +429,7 @@
     }
 
     // ---- accounts + technicians (unified) ----
-    var ALLSERVICES=[];
+    var ALLSERVICES=[], acctSel=null;
     function loadAccounts(){
       if(!api()||!authed()){ el("cfgMsg").textContent="Sign in with your account, or paste an admin token."; el("cfgMsg").style.color="var(--err)"; return; }
       setMsg("Loading...");
@@ -483,13 +487,32 @@
       // ----- list -----
       var linked={}; accts.forEach(function(a){ if(a.technician_id) linked[a.technician_id]=true; });
       var orphanTechs=techs.filter(function(t){ return !linked[t.id]; });
+      // One sub-tab per technician, plus a single "Admins" tab -- so you view one at a time.
+      var admins=accts.filter(function(a){ return !a.technician_id; });
+      var techEntries=[];
+      accts.forEach(function(a){ if(a.technician_id && techById[a.technician_id]) techEntries.push({tech:techById[a.technician_id], account:a}); });
+      orphanTechs.forEach(function(t){ techEntries.push({tech:t, account:null}); });
+      techEntries.sort(function(x,y){ return (x.tech.sort-y.tech.sort) || x.tech.name.localeCompare(y.tech.name); });
+      var chips=techEntries.map(function(e){ return {key:e.tech.id, label:e.tech.name, render:function(){ return techPersonCard(e.account, e.tech); }}; });
+      if(admins.length) chips.push({key:"__admins", label:"Admins", render:function(){ var box=document.createElement("div"); admins.forEach(function(a){ box.appendChild(adminRow(a)); }); return box; }});
       var sec=document.createElement("div"); sec.className="card setup-sec";
-      sec.innerHTML='<div style="padding:16px 16px 2px"><h3>People <span class="muted" style="font-size:12px">'+(accts.length+orphanTechs.length)+'</span></h3></div>';
-      var wrap=document.createElement("div");
-      accts.forEach(function(a){ wrap.appendChild(personRow(a, a.technician_id?techById[a.technician_id]:null)); });
-      orphanTechs.forEach(function(t){ wrap.appendChild(personRow(null, t)); });
-      if(!wrap.children.length){ wrap.innerHTML='<div class="empty">No one yet. Add a technician or admin above.</div>'; }
-      sec.appendChild(wrap); list.appendChild(sec);
+      if(!chips.length){ sec.innerHTML='<div class="empty" style="padding:24px">No one yet. Add a technician or admin above.</div>'; list.appendChild(sec); return; }
+      if(!chips.some(function(ch){ return ch.key===acctSel; })) acctSel=chips[0].key;
+      var nav=document.createElement("div"); nav.className="peoplenav";
+      var detail=document.createElement("div");
+      function selectChip(key){
+        acctSel=key;
+        nav.querySelectorAll(".pchip").forEach(function(x){ x.classList.toggle("on", x.dataset.key===key); });
+        var ch=chips.filter(function(c){ return c.key===key; })[0]||chips[0];
+        detail.innerHTML=""; detail.appendChild(ch.render());
+      }
+      chips.forEach(function(ch){
+        var btn=document.createElement("button"); btn.className="pchip"; btn.type="button"; btn.dataset.key=ch.key; btn.textContent=ch.label;
+        btn.onclick=function(){ selectChip(ch.key); };
+        nav.appendChild(btn);
+      });
+      sec.appendChild(nav); sec.appendChild(detail); list.appendChild(sec);
+      selectChip(acctSel);
     }
     function acctBadges(a){
       if(!a) return '';
@@ -526,7 +549,7 @@
           '<div class="rowbtns"><button class="btn t-save">Save</button>'+(t.active?'<button class="btn danger t-del">Deactivate</button>':'<button class="btn ghost sm t-react">Reactivate</button>')+loginPart+'<span class="t-msg"></span></div>'+
           '<div style="margin-top:14px"><label style="font-size:12px;font-weight:600;color:var(--muted)">Services performed <span style="font-weight:400">(none checked = all services)</span></label><div class="t-svcs" style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px"></div></div>'+
           '<div style="margin-top:14px"><label style="font-size:12px;font-weight:600;color:var(--muted)">Working hours <span style="font-weight:400">(unchecked = studio default)</span></label><div class="t-hours"></div></div>'+
-          '<div style="margin-top:14px"><label style="font-size:12px;font-weight:600;color:var(--muted)">Time off</label><div class="t-off"></div>'+
+          '<div style="margin-top:14px"><label style="font-size:12px;font-weight:600;color:var(--muted)">Time off <span style="font-weight:400">(block a specific day the technician is out -- vacation, day off; not their weekly hours)</span></label><div class="t-off"></div>'+
             '<div class="hrow" style="border:0;padding:8px 0"><input type="date" class="to-date"><input type="time" class="to-start" title="start (optional)"><input type="time" class="to-end" title="end (optional)"><input class="to-reason" placeholder="reason" style="flex:1;min-width:90px;border:1px solid var(--line);border-radius:8px;padding:8px 9px;font:inherit;font-size:14px"><button class="btn ghost sm to-add">Add</button></div>'+
           '</div>'+
         '</div>';
