@@ -57,8 +57,8 @@
       <div class="h">Sign in</div>
       <div class="sub">For studio staff and administrators.</div>
       <form id="loginForm" novalidate>
-        <label for="login">Email or username</label>
-        <input type="text" id="login" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+        <label for="login">Email</label>
+        <input type="email" id="login" autocomplete="username" autocapitalize="none" spellcheck="false" required>
         <label for="password">Password</label>
         <input type="password" id="password" autocomplete="current-password" required>
         {{ with $s.bookingTurnstileSiteKey }}<div class="cf"><div id="ts-login"></div></div>{{ end }}
@@ -73,8 +73,8 @@
       <div class="h">Reset your password</div>
       <div class="sub">Enter your login and we'll email you a reset link.</div>
       <form id="forgotForm" novalidate>
-        <label for="fLogin">Email or username</label>
-        <input type="text" id="fLogin" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+        <label for="fLogin">Email</label>
+        <input type="email" id="fLogin" autocomplete="username" autocapitalize="none" spellcheck="false" required>
         <div class="hp" aria-hidden="true"><label>Company<input type="text" id="fCompany" tabindex="-1" autocomplete="off"></label></div>
         {{ with $s.bookingTurnstileSiteKey }}<div class="cf"><div id="ts-forgot"></div></div>{{ end }}
         <button class="btn" id="forgotBtn" type="submit">Send reset link</button>
