@@ -392,7 +392,7 @@
         {{ with $s.phone }}<a href="tel:{{ . }}" aria-label="Phone">{{ partial "svg-icon.html" "phone" }}</a>{{ end }}
       </div>
       {{ with $s.address }}<p class="addr"><a href="{{ $s.mapsURL }}" target="_blank" rel="noopener">{{ . }}</a></p>{{ end }}
-      <p>&copy; {{ now.Year }} {{ $s.name }}</p>
+      <p>&copy; {{ now.Year }} {{ $s.name }} &middot; <a href="/privacy/">Privacy Policy</a></p>
     </footer>
 
   </main>
