@@ -69,6 +69,23 @@
     .sub.unsub{opacity:.5}
     .badge{display:inline-block;font-size:11px;font-weight:600;border-radius:999px;padding:1px 8px;margin-left:6px}
     .badge.off{color:var(--err);border:1px solid #e3c9c4}
+    .setup-sec{margin-bottom:20px}
+    .setup-sec h3{font-family:var(--serif);font-size:20px;font-weight:600;margin-bottom:10px;display:flex;justify-content:space-between;align-items:baseline}
+    .svcrow{padding:14px 16px;border-top:1px solid var(--line)}
+    .svcrow:first-child{border-top:0}
+    .svcrow.off{opacity:.55}
+    .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+    .fgrid .wide{grid-column:1 / -1}
+    .fld label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin:0 0 3px}
+    .fld input,.fld select{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 10px;font:inherit;font-size:14px;background:#fff;color:var(--ink)}
+    .fld input:focus,.fld select:focus{outline:0;border-color:var(--accent)}
+    .svcrow .rowbtns{display:flex;gap:8px;margin-top:10px;align-items:center}
+    .hrow{display:flex;gap:10px;align-items:center;padding:9px 16px;border-top:1px solid var(--line);flex-wrap:wrap}
+    .hrow:first-child{border-top:0}
+    .hrow .dow{flex:0 0 46px;font-weight:600;font-size:14px}
+    .hrow input[type=time]{border:1px solid var(--line);border-radius:8px;padding:8px 9px;font:inherit;font-size:14px}
+    .hrow label.cl{display:flex;gap:5px;align-items:center;color:var(--muted);font-size:13px;margin-left:auto}
+    .savedok{color:var(--ok);font-size:13px;font-weight:600}
     .hide{display:none}
     .spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;border-radius:50%;display:inline-block;animation:sp .7s linear infinite;vertical-align:-2px}
     @keyframes sp{to{transform:rotate(360deg)}}
@@ -102,6 +119,7 @@
     <div class="tabs hide" id="tabs">
       <button class="btn ghost tab-on" id="tabBookings">Bookings</button>
       <button class="btn ghost" id="tabSignups">Signups</button>
+      <button class="btn ghost" id="tabSetup">Setup</button>
     </div>
 
     <!-- bookings toolbar -->
@@ -118,6 +136,13 @@
       <button class="btn ghost" id="subReload">Refresh</button>
       <span class="grow"></span>
       <button class="btn ghost" id="subCsv">Download CSV</button>
+    </div>
+
+    <!-- setup toolbar -->
+    <div class="toolbar hide" id="setupToolbar">
+      <button class="btn ghost" id="setupReload">Refresh</button>
+      <span class="grow"></span>
+      <span class="muted">Changes go live within ~1 minute.</span>
     </div>
 
     <div id="msg" class="msg"></div>
@@ -250,19 +275,139 @@
         .catch(function(){ btn.disabled=false; btn.innerHTML=orig; setMsg("Could not download CSV.", true); });
     }
     function showTab(which){
-      var bk=which==="bookings";
-      el("tabBookings").classList.toggle("tab-on", bk);
-      el("tabSignups").classList.toggle("tab-on", !bk);
-      el("toolbar").classList.toggle("hide", !bk);
-      el("subToolbar").classList.toggle("hide", bk);
+      el("tabBookings").classList.toggle("tab-on", which==="bookings");
+      el("tabSignups").classList.toggle("tab-on", which==="signups");
+      el("tabSetup").classList.toggle("tab-on", which==="setup");
+      el("toolbar").classList.toggle("hide", which!=="bookings");
+      el("subToolbar").classList.toggle("hide", which!=="signups");
+      el("setupToolbar").classList.toggle("hide", which!=="setup");
       el("list").innerHTML=""; setMsg("");
-      if(bk) load(el("dateFilter").value||undefined); else loadSubs();
+      if(which==="bookings") load(el("dateFilter").value||undefined);
+      else if(which==="signups") loadSubs();
+      else loadSetup();
+    }
+
+    // ---- setup: services / hours / settings (T00) ----
+    var DOWSHORT=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    function minToTime(m){ if(m==null||m==="") return ""; var h=Math.floor(m/60),mm=m%60; return String(h).padStart(2,"0")+":"+String(mm).padStart(2,"0"); }
+    function timeToMin(t){ if(!t) return null; var p=t.split(":"); return (+p[0])*60+(+p[1]); }
+    function centsToStr(c){ return (c==null||c==="")?"":(c/100).toFixed(2); }
+    function setRowMsg(elm,txt,err){ elm.textContent=txt; elm.className=err?"":"savedok"; elm.style.color=err?"var(--err)":""; }
+    function postAdmin(p,payload,btn,msgEl,done){
+      var orig=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spin" style="border-top-color:var(--muted)"></span>';
+      fetch(api()+p,{method:"POST",headers:Object.assign({"Content-Type":"application/json"},hdr()),body:JSON.stringify(payload)})
+        .then(function(r){ return r.json().then(function(d){return {ok:r.ok,d:d}}); })
+        .then(function(res){ btn.disabled=false; btn.innerHTML=orig;
+          if(!res.ok){ setRowMsg(msgEl,(res.d&&res.d.error)||"Save failed",true); return; }
+          setRowMsg(msgEl,"Saved",false); if(done) done(res.d);
+        }).catch(function(){ btn.disabled=false; btn.innerHTML=orig; setRowMsg(msgEl,"Network error",true); });
+    }
+    function loadSetup(){
+      if(!api()||!tok()){ el("cfgMsg").textContent="Enter the API URL and admin token."; el("cfgMsg").style.color="var(--err)"; return; }
+      setMsg("Loading setup...");
+      fetch(api()+"/api/admin/config",{headers:hdr()}).then(function(r){
+        if(r.status===401) throw new Error("Unauthorized -- check the admin token.");
+        if(!r.ok) throw new Error("Request failed ("+r.status+").");
+        return r.json();
+      }).then(function(d){ setMsg(""); renderSetup(d); })
+        .catch(function(e){ setMsg(e.message||"Could not load setup.", true); el("list").innerHTML=""; });
+    }
+    function renderSetup(d){
+      var list=el("list"); list.innerHTML="";
+      // services
+      var svcSec=document.createElement("div"); svcSec.className="card setup-sec";
+      svcSec.innerHTML='<div style="padding:16px 16px 2px"><h3>Services <span class="muted" style="font-size:12px">'+((d.services||[]).filter(function(s){return s.active}).length)+' active</span></h3></div>';
+      var svcWrap=document.createElement("div");
+      (d.services||[]).forEach(function(s){ svcWrap.appendChild(serviceRow(s,false)); });
+      svcSec.appendChild(svcWrap);
+      var addWrap=document.createElement("div"); addWrap.style.padding="10px 16px 16px";
+      var addBtn=document.createElement("button"); addBtn.className="btn ghost"; addBtn.textContent="+ Add service";
+      addBtn.onclick=function(){ addBtn.disabled=true; svcWrap.appendChild(serviceRow({id:"",name:"",category:"",duration_min:30,price_cents:0,deposit_cents:"",price_display:"",sort:((d.services||[]).length+1)*10,active:1},true)); };
+      addWrap.appendChild(addBtn); svcSec.appendChild(addWrap);
+      list.appendChild(svcSec);
+      // hours
+      var hSec=document.createElement("div"); hSec.className="card setup-sec";
+      hSec.innerHTML='<div style="padding:16px 16px 2px"><h3>Opening hours</h3></div>';
+      var byWd={}; (d.hours||[]).forEach(function(h){ byWd[h.weekday]=h; });
+      var hWrap=document.createElement("div");
+      for(var wd=0; wd<=6; wd++) hWrap.appendChild(hoursRow(wd, byWd[wd]||{weekday:wd,open_min:null,close_min:null}));
+      hSec.appendChild(hWrap); list.appendChild(hSec);
+      // settings
+      var sSec=document.createElement("div"); sSec.className="card setup-sec"; sSec.style.padding="16px";
+      sSec.appendChild(settingsForm(d.settings||{})); list.appendChild(sSec);
+    }
+    function serviceRow(s,isNew){
+      var row=document.createElement("div"); row.className="svcrow"+(s.active?"":" off");
+      row.innerHTML=
+        '<div class="fgrid">'+
+          '<div class="fld wide"><label>Name</label><input class="f-name" value="'+esc(s.name)+'"></div>'+
+          '<div class="fld"><label>Category</label><input class="f-cat" value="'+esc(s.category||"")+'"></div>'+
+          '<div class="fld"><label>Duration (min)</label><input class="f-dur" type="number" min="1" value="'+(s.duration_min||0)+'"></div>'+
+          '<div class="fld"><label>Price label</label><input class="f-disp" value="'+esc(s.price_display||"")+'"></div>'+
+          '<div class="fld"><label>Price ($)</label><input class="f-price" type="number" step="0.01" min="0" value="'+centsToStr(s.price_cents)+'"></div>'+
+          '<div class="fld"><label>Deposit ($)</label><input class="f-dep" type="number" step="0.01" min="0" value="'+centsToStr(s.deposit_cents)+'"></div>'+
+          '<div class="fld"><label>Sort</label><input class="f-sort" type="number" value="'+(s.sort||0)+'"></div>'+
+        '</div>'+
+        '<div class="rowbtns"><button class="btn f-save">Save</button>'+
+          (isNew?'':'<button class="btn danger f-del">'+(s.active?'Deactivate':'Reactivate')+'</button>')+
+          '<span class="f-msg"></span></div>';
+      var q=function(c){return row.querySelector(c)};
+      q(".f-save").onclick=function(){
+        var dur=parseInt(q(".f-dur").value,10);
+        if(!q(".f-name").value.trim()||!(dur>0)){ setRowMsg(q(".f-msg"),"Name + duration required",true); return; }
+        var payload={ id:s.id||undefined, name:q(".f-name").value.trim(), category:q(".f-cat").value.trim(),
+          duration_min:dur, price_cents:Math.round(parseFloat(q(".f-price").value||"0")*100),
+          deposit_cents:q(".f-dep").value===""?"":Math.round(parseFloat(q(".f-dep").value)*100),
+          price_display:q(".f-disp").value.trim(), sort:parseInt(q(".f-sort").value,10)||0, active:!!s.active };
+        postAdmin("/api/admin/service",payload,q(".f-save"),q(".f-msg"),function(){ loadSetup(); });
+      };
+      if(!isNew) q(".f-del").onclick=function(){
+        if(s.active) postAdmin("/api/admin/service/delete",{id:s.id},q(".f-del"),q(".f-msg"),function(){ loadSetup(); });
+        else postAdmin("/api/admin/service",{id:s.id,name:s.name,category:s.category,duration_min:s.duration_min,price_cents:s.price_cents,deposit_cents:s.deposit_cents==null?"":s.deposit_cents,price_display:s.price_display,sort:s.sort,active:true},q(".f-del"),q(".f-msg"),function(){ loadSetup(); });
+      };
+      return row;
+    }
+    function hoursRow(wd,h){
+      var row=document.createElement("div"); row.className="hrow";
+      var closed=(h.open_min==null||h.close_min==null);
+      row.innerHTML=
+        '<span class="dow">'+DOWSHORT[wd]+'</span>'+
+        '<input type="time" class="h-open" value="'+minToTime(h.open_min)+'"'+(closed?' disabled':'')+'>'+
+        '<span class="muted">to</span>'+
+        '<input type="time" class="h-close" value="'+minToTime(h.close_min)+'"'+(closed?' disabled':'')+'>'+
+        '<label class="cl"><input type="checkbox" class="h-closed"'+(closed?' checked':'')+'> Closed</label>'+
+        '<button class="btn ghost h-save">Save</button><span class="h-msg"></span>';
+      var q=function(c){return row.querySelector(c)};
+      q(".h-closed").onchange=function(){ var c=q(".h-closed").checked; q(".h-open").disabled=c; q(".h-close").disabled=c; };
+      q(".h-save").onclick=function(){
+        var c=q(".h-closed").checked;
+        if(!c && (!q(".h-open").value||!q(".h-close").value)){ setRowMsg(q(".h-msg"),"Set both times",true); return; }
+        var payload=c?{weekday:wd,closed:true}:{weekday:wd,open_min:timeToMin(q(".h-open").value),close_min:timeToMin(q(".h-close").value)};
+        postAdmin("/api/admin/hours",payload,q(".h-save"),q(".h-msg"),null);
+      };
+      return row;
+    }
+    function settingsForm(set){
+      var wrap=document.createElement("div");
+      var fields=[["slot_interval_min","Slot interval (min)"],["min_lead_minutes","Min lead time (min)"],["max_advance_days","Max advance (days)"],["cancel_lead_minutes","Self-cancel cutoff (min)"],["reminder_lead_hours","Reminder lead (hours)"],["deposit_default_cents","Default deposit (cents)"],["timezone","Timezone"]];
+      var h='<h3 style="font-family:var(--serif);font-size:20px;font-weight:600;margin-bottom:10px">Booking settings</h3><div class="fgrid">';
+      fields.forEach(function(f){ h+='<div class="fld"><label>'+f[1]+'</label><input class="st-'+f[0]+'" value="'+esc(set[f[0]]!=null?set[f[0]]:"")+'"></div>'; });
+      h+='</div><div class="rowbtns"><button class="btn st-save">Save settings</button><span class="st-msg"></span></div>';
+      wrap.innerHTML=h;
+      wrap.querySelector(".st-save").onclick=function(){
+        var payload={settings:{}};
+        fields.forEach(function(f){ payload.settings[f[0]]=wrap.querySelector(".st-"+f[0]).value.trim(); });
+        postAdmin("/api/admin/settings",payload,wrap.querySelector(".st-save"),wrap.querySelector(".st-msg"),null);
+      };
+      return wrap;
     }
 
     el("tabBookings").onclick=function(){ showTab("bookings"); };
     el("tabSignups").onclick=function(){ showTab("signups"); };
+    el("tabSetup").onclick=function(){ showTab("setup"); };
     el("subReload").onclick=function(){ loadSubs(); };
     el("subCsv").onclick=function(){ downloadCsv(); };
+    el("setupReload").onclick=function(){ loadSetup(); };
 
     el("loadBtn").onclick=function(){ load(el("dateFilter").value||undefined); };
     el("reload").onclick=function(){ load(el("dateFilter").value||undefined); };
