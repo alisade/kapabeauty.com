@@ -120,6 +120,7 @@
       <button class="btn ghost tab-on" id="tabBookings">Bookings</button>
       <button class="btn ghost" id="tabSignups">Signups</button>
       <button class="btn ghost" id="tabSetup">Setup</button>
+      <button class="btn ghost" id="tabAccounts">Accounts</button>
     </div>
 
     <!-- bookings toolbar -->
@@ -143,6 +144,13 @@
       <button class="btn ghost" id="setupReload">Refresh</button>
       <span class="grow"></span>
       <span class="muted">Changes go live within ~1 minute.</span>
+    </div>
+
+    <!-- accounts toolbar -->
+    <div class="toolbar hide" id="acctToolbar">
+      <button class="btn ghost" id="acctReload">Refresh</button>
+      <span class="grow"></span>
+      <span class="muted">Staff &amp; admin logins for /login</span>
     </div>
 
     <div id="msg" class="msg"></div>
@@ -278,13 +286,16 @@
       el("tabBookings").classList.toggle("tab-on", which==="bookings");
       el("tabSignups").classList.toggle("tab-on", which==="signups");
       el("tabSetup").classList.toggle("tab-on", which==="setup");
+      el("tabAccounts").classList.toggle("tab-on", which==="accounts");
       el("toolbar").classList.toggle("hide", which!=="bookings");
       el("subToolbar").classList.toggle("hide", which!=="signups");
       el("setupToolbar").classList.toggle("hide", which!=="setup");
+      el("acctToolbar").classList.toggle("hide", which!=="accounts");
       el("list").innerHTML=""; setMsg("");
       if(which==="bookings") load(el("dateFilter").value||undefined);
       else if(which==="signups") loadSubs();
-      else loadSetup();
+      else if(which==="setup") loadSetup();
+      else loadAccounts();
     }
 
     // ---- setup: services / hours / settings (T00) ----
@@ -402,12 +413,79 @@
       return wrap;
     }
 
+    // ---- accounts (T16) ----
+    function loadAccounts(){
+      if(!api()||!tok()){ el("cfgMsg").textContent="Enter the API URL and admin token."; el("cfgMsg").style.color="var(--err)"; return; }
+      setMsg("Loading logins...");
+      fetch(api()+"/api/admin/accounts",{headers:hdr()}).then(function(r){
+        if(r.status===401) throw new Error("Unauthorized -- check the admin token.");
+        if(!r.ok) throw new Error("Request failed ("+r.status+").");
+        return r.json();
+      }).then(function(d){ setMsg(""); renderAccounts(d); })
+        .catch(function(e){ setMsg(e.message||"Could not load logins.", true); el("list").innerHTML=""; });
+    }
+    function renderAccounts(d){
+      var list=el("list"); list.innerHTML="";
+      var c=document.createElement("div"); c.className="card setup-sec"; c.style.padding="16px";
+      c.innerHTML='<h3 style="font-family:var(--serif);font-size:20px;font-weight:600;margin-bottom:10px">New login</h3>'+
+        '<div class="fgrid">'+
+          '<div class="fld wide"><label>Email or username</label><input class="a-login" autocapitalize="none"></div>'+
+          '<div class="fld"><label>Role</label><select class="a-role"><option value="staff">Staff</option><option value="admin">Admin</option></select></div>'+
+          '<div class="fld"><label>Staff ID (optional)</label><input class="a-staff" placeholder="links to a technician"></div>'+
+          '<div class="fld wide"><label>Temp password (optional)</label><input class="a-pass" placeholder="leave blank to auto-generate"></div>'+
+        '</div>'+
+        '<div class="rowbtns"><button class="btn a-create">Create login</button><span class="a-msg"></span></div>'+
+        '<div class="a-temp savedok" style="margin-top:8px;word-break:break-all"></div>';
+      var q=function(sel){return c.querySelector(sel)};
+      q(".a-create").onclick=function(){
+        var login=q(".a-login").value.trim();
+        if(!login){ setRowMsg(q(".a-msg"),"Login required",true); return; }
+        var payload={login:login, role:q(".a-role").value, staff_id:q(".a-staff").value.trim()||undefined, password:q(".a-pass").value||undefined};
+        postAdmin("/api/admin/accounts",payload,q(".a-create"),q(".a-msg"),function(res){
+          q(".a-login").value=""; q(".a-staff").value=""; q(".a-pass").value="";
+          q(".a-temp").textContent=(res&&res.tempPassword)?("Temp password for "+res.login+":  "+res.tempPassword+"   (share it securely; they set their own on first login)"):"";
+          loadAccounts();
+        });
+      };
+      list.appendChild(c);
+      var sec=document.createElement("div"); sec.className="card setup-sec";
+      sec.innerHTML='<div style="padding:16px 16px 2px"><h3>Logins <span class="muted" style="font-size:12px">'+((d.accounts||[]).length)+'</span></h3></div>';
+      var wrap=document.createElement("div");
+      if(!(d.accounts||[]).length){ wrap.innerHTML='<div class="empty">No logins yet. Create one above.</div>'; }
+      else (d.accounts||[]).forEach(function(a){ wrap.appendChild(acctRow(a)); });
+      sec.appendChild(wrap); list.appendChild(sec);
+    }
+    function acctRow(a){
+      var row=document.createElement("div"); row.className="sub"+(a.active?"":" unsub");
+      var badges=(a.role==="admin"?'<span class="badge" style="color:var(--accent);border:1px solid var(--line)">admin</span>':'')+
+        (a.must_reset?'<span class="badge" style="color:#9a7b25;border:1px solid #e6d9b0">must reset</span>':'')+
+        (a.active?'':'<span class="badge off">inactive</span>');
+      row.innerHTML='<div class="em">'+esc(a.login)+' '+badges+(a.staff_id?('<div class="nm">staff: '+esc(a.staff_id)+'</div>'):'')+'</div>'+
+        '<div class="rowbtns" style="margin:0"><button class="btn ghost a-reset">Reset</button>'+
+        (a.active?'<button class="btn danger a-deact">Deactivate</button>':'')+'<span class="a-rmsg"></span></div>';
+      var q=function(sel){return row.querySelector(sel)};
+      q(".a-reset").onclick=function(){
+        if(!confirm("Reset password for "+a.login+"? Their current sessions end and they get a temp password."))return;
+        postAdmin("/api/admin/accounts/reset",{id:a.id},q(".a-reset"),q(".a-rmsg"),function(res){
+          if(res&&res.tempPassword) alert("Temp password for "+a.login+":\n\n"+res.tempPassword+"\n\nShare it securely. They set their own on next login.");
+          loadAccounts();
+        });
+      };
+      if(a.active) q(".a-deact").onclick=function(){
+        if(!confirm("Deactivate "+a.login+"? They can no longer sign in."))return;
+        postAdmin("/api/admin/accounts/deactivate",{id:a.id},q(".a-deact"),q(".a-rmsg"),function(){ loadAccounts(); });
+      };
+      return row;
+    }
+
     el("tabBookings").onclick=function(){ showTab("bookings"); };
     el("tabSignups").onclick=function(){ showTab("signups"); };
     el("tabSetup").onclick=function(){ showTab("setup"); };
+    el("tabAccounts").onclick=function(){ showTab("accounts"); };
     el("subReload").onclick=function(){ loadSubs(); };
     el("subCsv").onclick=function(){ downloadCsv(); };
     el("setupReload").onclick=function(){ loadSetup(); };
+    el("acctReload").onclick=function(){ loadAccounts(); };
 
     el("loadBtn").onclick=function(){ load(el("dateFilter").value||undefined); };
     el("reload").onclick=function(){ load(el("dateFilter").value||undefined); };

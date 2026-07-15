@@ -1,0 +1,153 @@
+{{- $s := site.Data.studio -}}
+<!DOCTYPE html>
+<html lang="{{ site.LanguageCode | default "en-us" }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in - {{ $s.name }}</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg-top:#f6efe7;--bg-bottom:#e9ddcf;--card:#fffdfb;--ink:#2e2823;--muted:#8a7f72;
+      --line:#e7dccd;--accent:#8a6f57;--accent-ink:#fffaf3;--ok:#3f7d5b;--err:#a5463c;--radius:16px;
+      --serif:"Cormorant Garamond",Georgia,serif;--sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--sans);color:var(--ink);background:linear-gradient(180deg,var(--bg-top),var(--bg-bottom));background-attachment:fixed;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+    .wrap{max-width:400px;margin:0 auto;padding:56px 18px 64px}
+    .hero{text-align:center;margin-bottom:20px}
+    .avatar{width:72px;height:72px;border-radius:50%;margin:0 auto 12px;object-fit:cover;border:3px solid #fff;box-shadow:0 8px 24px rgba(70,55,40,.16);background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:26px;color:var(--accent-ink)}
+    .name{font-family:var(--serif);font-size:24px;font-weight:600}
+    .tagline{color:var(--accent);font-weight:600;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;margin-top:5px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 4px 20px rgba(70,55,40,.06);padding:22px 20px}
+    .h{font-family:var(--serif);font-size:21px;font-weight:600;margin-bottom:4px}
+    .sub{color:var(--muted);font-size:13.5px;margin-bottom:16px}
+    label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:0 0 5px}
+    input{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:11px;font:inherit;font-size:16px;background:#fff;color:var(--ink);margin-bottom:13px}
+    input:focus{outline:none;border-color:var(--accent)}
+    .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px 20px;background:var(--accent);color:var(--accent-ink);border:0;border-radius:11px;font:inherit;font-weight:600;font-size:15px;cursor:pointer}
+    .btn:hover{opacity:.93}.btn[disabled]{opacity:.55;cursor:not-allowed}
+    .msg{font-size:14px;text-align:center;padding:8px 0 0}.msg.err{color:var(--err)}.msg.ok{color:var(--ok)}
+    .foot{text-align:center;margin-top:18px}.foot a{color:var(--muted);font-size:13px;text-decoration:none}.foot a:hover{color:var(--ink)}
+    .tick{width:52px;height:52px;border-radius:50%;background:var(--ok);color:#fff;display:flex;align-items:center;justify-content:center;margin:2px auto 14px}
+    .center{text-align:center}
+    .spin{width:18px;height:18px;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;border-radius:50%;display:inline-block;animation:sp .7s linear infinite}
+    @keyframes sp{to{transform:rotate(360deg)}}.hide{display:none}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="hero">
+      {{ if $s.avatar }}<img class="avatar" src="{{ $s.avatar }}" alt="{{ $s.name }}">{{ else }}<div class="avatar">{{ $s.initials }}</div>{{ end }}
+      <div class="name">{{ $s.name }}</div>
+      <div class="tagline">Team sign in</div>
+    </header>
+
+    <!-- login form -->
+    <div class="card" id="loginCard">
+      <div class="h">Sign in</div>
+      <div class="sub">For studio staff and administrators.</div>
+      <form id="loginForm" novalidate>
+        <label for="login">Email or username</label>
+        <input type="text" id="login" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+        <label for="password">Password</label>
+        <input type="password" id="password" autocomplete="current-password" required>
+        <button class="btn" id="loginBtn" type="submit">Sign in</button>
+        <div id="loginMsg" class="msg err hide"></div>
+      </form>
+    </div>
+
+    <!-- forced password reset -->
+    <div class="card hide" id="resetCard">
+      <div class="h">Set a new password</div>
+      <div class="sub">Choose a new password to finish signing in.</div>
+      <form id="resetForm" novalidate>
+        <label for="np">New password</label>
+        <input type="password" id="np" autocomplete="new-password" required>
+        <label for="np2">Confirm new password</label>
+        <input type="password" id="np2" autocomplete="new-password" required>
+        <button class="btn" id="resetBtn" type="submit">Save and continue</button>
+        <div id="resetMsg" class="msg err hide"></div>
+      </form>
+    </div>
+
+    <!-- staff signed-in (until T01 staff portal exists) -->
+    <div class="card center hide" id="staffCard">
+      <div class="tick"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="h">You're signed in</div>
+      <p class="sub" style="margin-top:6px">Your personal schedule view is coming soon. For now, ask an administrator for today's appointments.</p>
+      <button class="btn" id="staffOut" style="margin-top:6px">Sign out</button>
+    </div>
+
+    <div class="foot"><a href="/">&larr; Back to site</a></div>
+  </main>
+
+  <script>
+  (function(){
+    var API="{{ $s.bookingApiURL }}".replace(/\/+$/,"");
+    var el=function(id){return document.getElementById(id)};
+    var pendingPassword=""; // remembered from the login form to satisfy the reset's "current"
+
+    function err(box,t){ box.textContent=t; box.className="msg err"; }
+    function clr(box){ box.className="msg err hide"; }
+    function show(card){ ["loginCard","resetCard","staffCard"].forEach(function(c){ el(c).classList.toggle("hide", c!==card); }); }
+
+    function routeAfterAuth(role, token){
+      if(role==="admin"){
+        // Hand the session token to /admin (it authenticates with Bearer <token>).
+        try{ localStorage.setItem("lb_api", API); localStorage.setItem("lb_token", token); }catch(e){}
+        location.href="/admin/";
+      } else {
+        try{ localStorage.setItem("lb_staff_api", API); localStorage.setItem("lb_staff_token", token); }catch(e){}
+        show("staffCard");
+      }
+    }
+
+    el("loginForm").addEventListener("submit",function(e){
+      e.preventDefault(); clr(el("loginMsg"));
+      var login=el("login").value.trim(), password=el("password").value;
+      if(!login||!password){ err(el("loginMsg"),"Enter your login and password."); return; }
+      var btn=el("loginBtn"), o=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spin"></span>';
+      fetch(API+"/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({login:login,password:password})})
+        .then(function(r){ return r.json().then(function(d){return {ok:r.ok,d:d}}); })
+        .then(function(res){
+          btn.disabled=false; btn.innerHTML=o;
+          if(!res.ok){ err(el("loginMsg"), res.d.error||"Sign in failed."); return; }
+          window.__session={token:res.d.token, role:res.d.role};
+          pendingPassword=password;
+          if(res.d.must_reset){ show("resetCard"); }
+          else { routeAfterAuth(res.d.role, res.d.token); }
+        })
+        .catch(function(){ btn.disabled=false; btn.innerHTML=o; err(el("loginMsg"),"Network error. Please try again."); });
+    });
+
+    el("resetForm").addEventListener("submit",function(e){
+      e.preventDefault(); clr(el("resetMsg"));
+      var np=el("np").value, np2=el("np2").value;
+      if(np.length<8){ err(el("resetMsg"),"New password must be at least 8 characters."); return; }
+      if(np!==np2){ err(el("resetMsg"),"Passwords do not match."); return; }
+      var btn=el("resetBtn"), o=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spin"></span>';
+      fetch(API+"/api/auth/password",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+window.__session.token},body:JSON.stringify({current:pendingPassword,next:np})})
+        .then(function(r){ return r.json().then(function(d){return {ok:r.ok,d:d}}); })
+        .then(function(res){
+          btn.disabled=false; btn.innerHTML=o;
+          if(!res.ok){ err(el("resetMsg"), res.d.error||"Could not set password."); return; }
+          routeAfterAuth(window.__session.role, window.__session.token);
+        })
+        .catch(function(){ btn.disabled=false; btn.innerHTML=o; err(el("resetMsg"),"Network error. Please try again."); });
+    });
+
+    el("staffOut").onclick=function(){
+      var t=(window.__session&&window.__session.token)||localStorage.getItem("lb_staff_token")||"";
+      if(t) fetch(API+"/api/auth/logout",{method:"POST",headers:{"Authorization":"Bearer "+t}}).catch(function(){});
+      try{ localStorage.removeItem("lb_staff_token"); }catch(e){}
+      show("loginCard"); el("password").value="";
+    };
+  })();
+  </script>
+</body>
+</html>
