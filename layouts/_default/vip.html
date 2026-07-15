@@ -94,7 +94,7 @@
           {{ with $s.bookingTurnstileSiteKey }}<div class="cf"><div class="cf-turnstile" data-sitekey="{{ . }}" data-theme="light"></div></div>{{ end }}
           <button class="btn" id="submit" type="submit">Secure my spot</button>
           <div id="msg" class="msg err hide"></div>
-          <p class="fine">Drop your email and you're in. We'll only email you about the opening and your VIP perks &mdash; unsubscribe any time.</p>
+          <p class="fine">Drop your email and you're in. We'll only email you about the opening and your VIP perks - unsubscribe any time.</p>
         </form>
       </div>
 
@@ -102,7 +102,7 @@
       <div id="done" class="center hide">
         <div class="tick"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
         <div class="lead" id="doneTitle">You're on the list!</div>
-        <p class="sub" id="doneMsg">Welcome to the Founding Members List. Check your inbox for a confirmation &mdash; we'll email you first when booking opens. See you this Labor Day!</p>
+        <p class="sub" id="doneMsg">Welcome to the Founding Members List. Check your inbox for a confirmation - we'll email you first when booking opens. See you this Labor Day!</p>
       </div>
     </div>
 
@@ -142,7 +142,7 @@
           }
           if(res.d.status==="already"){
             el("doneTitle").textContent="You're already on the list!";
-            el("doneMsg").textContent="Good news — this email is already a Founding Member. We'll be in touch soon.";
+            el("doneMsg").textContent="Good news - this email is already a Founding Member. We'll be in touch soon.";
           }
           el("signup").classList.add("hide");
           el("done").classList.remove("hide");
