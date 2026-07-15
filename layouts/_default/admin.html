@@ -232,7 +232,7 @@
           var phone=(b.phone||"").replace(/[^0-9+]/g,"");
           row.innerHTML=
             '<div class="time">'+minLabel(b.start_min)+'<span class="dur">'+durLabel(b.duration_min)+'</span></div>'+
-            '<div class="info"><div class="svc">'+esc(b.service_label)+(b.status!=="confirmed"?'<span class="pill">cancelled</span>':'')+'</div>'+
+            '<div class="info"><div class="svc">'+esc(b.service_label)+(b.technician_name?' <span class="muted" style="font-weight:500">with '+esc(b.technician_name)+'</span>':'')+(b.status!=="confirmed"?'<span class="pill">cancelled</span>':'')+'</div>'+
             '<div class="who">'+esc(b.name)+' &middot; <a href="tel:'+phone+'">'+esc(b.phone)+'</a>'+(b.email?(' &middot; <a href="mailto:'+esc(b.email)+'">'+esc(b.email)+'</a>'):'')+'</div>'+
             (b.notes?('<div class="notes">'+esc(b.notes)+'</div>'):'')+'</div>'+
             '<div class="actions"></div>';

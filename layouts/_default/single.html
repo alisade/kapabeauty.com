@@ -147,6 +147,14 @@
         <div id="serviceList"></div>
       </section>
 
+      <!-- step: technician (conditional -- only when 2+ technicians offer the service) -->
+      <section id="sTech" class="card hide">
+        <div class="panel-h">Choose your technician</div>
+        <div class="panel-sub" id="sTechSub"></div>
+        <div id="techList"></div>
+        <div class="barbtn"><button class="btn btn-ghost" id="backTech">Back</button></div>
+      </section>
+
       <!-- step 2: date -->
       <section id="s2" class="card hide">
         <div class="panel-h">Pick a date</div>
@@ -202,15 +210,52 @@
     if(!API){ document.getElementById("notReady").classList.remove("hide"); return; }
     document.getElementById("app").classList.remove("hide");
 
-    var cfg=null, state={service:null, date:null, dateLabel:null, slot:null, slotLabel:null};
+    var cfg=null, techs=[], state={service:null, technician:null, technicianLabel:null, techStepShown:false, date:null, dateLabel:null, slot:null, slotLabel:null};
     var el=function(id){return document.getElementById(id)};
     var MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     var DOW=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
 
     function show(step){
       ["s1","s2","s3","s4","s5"].forEach(function(s,i){ el(s).classList.toggle("hide", (i+1)!==step); });
+      el("sTech").classList.add("hide");
       var bar=el("stepbar").querySelectorAll(".st");
       bar.forEach(function(b){ var n=+b.dataset.step; b.classList.toggle("active",n===step); b.classList.toggle("done",n<step); });
+      window.scrollTo({top:0,behavior:"smooth"});
+    }
+    // After a service is chosen: decide whether to show the technician step.
+    // 0 technicians -> single-resource (skip). 1 qualified -> auto-assign (skip). 2+ -> choose.
+    function qualifiedTechs(){ return techs.filter(function(t){ return !t.service_ids || t.service_ids.length===0 || t.service_ids.indexOf(state.service.id)>=0; }); }
+    function afterService(){
+      state.technician=null; state.technicianLabel=null; state.techStepShown=false;
+      if(!techs.length){ buildDates(); show(2); return; }
+      var q=qualifiedTechs();
+      if(q.length===0){ state.technician="any"; buildDates(); show(2); return; }
+      if(q.length===1){ state.technician=q[0].id; state.technicianLabel=q[0].name; buildDates(); show(2); return; }
+      renderTechChoice(q); state.techStepShown=true; showTech();
+    }
+    function chooseTech(id,label){ state.technician=id; state.technicianLabel=label; buildDates(); show(2); }
+    function renderTechChoice(q){
+      el("sTechSub").textContent=state.service.label;
+      var list=el("techList"); list.innerHTML="";
+      var any=document.createElement("button"); any.className="opt"; any.type="button";
+      any.innerHTML='<div class="om"><div class="ol">Any available</div><div class="od">First free professional</div></div>'+
+        '<span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></span>';
+      any.onclick=function(){ chooseTech("any","Any available"); };
+      list.appendChild(any);
+      q.forEach(function(t){
+        var b=document.createElement("button"); b.className="opt"; b.type="button";
+        var photo=t.photo_url?('<img src="'+esc(t.photo_url)+'" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;margin-right:11px">'):'';
+        b.innerHTML='<div class="om" style="display:flex;align-items:center">'+photo+'<div><div class="ol">'+esc(t.name)+'</div>'+(t.bio?('<div class="od">'+esc(t.bio)+'</div>'):'')+'</div></div>'+
+          '<span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></span>';
+        b.onclick=(function(t){return function(){ chooseTech(t.id,t.name); };})(t);
+        list.appendChild(b);
+      });
+    }
+    function showTech(){
+      ["s1","s2","s3","s4","s5"].forEach(function(s){ el(s).classList.add("hide"); });
+      el("sTech").classList.remove("hide");
+      el("stepbar").querySelectorAll(".st").forEach(function(b){ var n=+b.dataset.step; b.classList.toggle("done",n===1); b.classList.remove("active"); });
       window.scrollTo({top:0,behavior:"smooth"});
     }
     function durLabel(m){ var h=Math.floor(m/60),mm=m%60; return (h?h+" hr ":"")+(mm?mm+" min":"").trim()||m+" min"; }
@@ -230,7 +275,7 @@
           b.querySelector(".ol").textContent=s.label;
           b.querySelector(".od").textContent=durLabel(s.minutes);
           b.querySelector(".op").textContent=s.price||"";
-          b.onclick=function(){ state.service=s; el("s2sub").textContent=s.label+" - "+durLabel(s.minutes); buildDates(); show(2); };
+          b.onclick=function(){ state.service=s; el("s2sub").textContent=s.label+" - "+durLabel(s.minutes); afterService(); };
           list.appendChild(b);
         });
       });
@@ -262,7 +307,8 @@
       el("s3sub").textContent=state.service.label+" - "+state.dateLabel;
       var wrap=el("slotWrap"); wrap.innerHTML='<div class="empty">Loading times...</div>';
       show(3);
-      fetch(API+"/api/availability?date="+encodeURIComponent(state.date)+"&service="+encodeURIComponent(state.service.id))
+      var tq = state.technician ? "&technician="+encodeURIComponent(state.technician) : "";
+      fetch(API+"/api/availability?date="+encodeURIComponent(state.date)+"&service="+encodeURIComponent(state.service.id)+tq)
         .then(function(r){return r.json()})
         .then(function(d){
           if(!d.slots || !d.slots.length){ wrap.innerHTML='<div class="empty">No open times on this day. Please pick another date.</div>'; return; }
@@ -281,6 +327,7 @@
     function goDetails(){
       el("summary").innerHTML=
         '<div class="row"><span class="k">Service</span><span class="v">'+state.service.label+'</span></div>'+
+        (state.technicianLabel?'<div class="row"><span class="k">Technician</span><span class="v">'+esc(state.technicianLabel)+'</span></div>':'')+
         '<div class="row"><span class="k">Date</span><span class="v">'+state.dateLabel+'</span></div>'+
         '<div class="row"><span class="k">Time</span><span class="v">'+state.slotLabel+'</span></div>'+
         '<div class="row"><span class="k">Duration</span><span class="v">'+durLabel(state.service.minutes)+'</span></div>'+
@@ -303,7 +350,7 @@
       e.preventDefault();
       var msg=el("formMsg"); msg.classList.add("hide");
       var btn=el("confirmBtn"); var orig=btn.innerHTML;
-      var payload={ service:state.service.id, date:state.date, start:state.slot,
+      var payload={ service:state.service.id, technician:state.technician||undefined, date:state.date, start:state.slot,
         name:el("fName").value.trim(), phone:el("fPhone").value.trim(),
         email:el("fEmail").value.trim(), notes:el("fNotes").value.trim(),
         company:el("fCompany").value, turnstileToken:tsToken() };
@@ -319,6 +366,7 @@
           el("confMsg").textContent="We've booked "+res.d.service+" for "+res.d.name+".";
           el("confSummary").innerHTML=
             '<div class="row"><span class="k">Service</span><span class="v">'+res.d.service+'</span></div>'+
+            (res.d.technician?'<div class="row"><span class="k">Technician</span><span class="v">'+esc(res.d.technician.name)+'</span></div>':'')+
             '<div class="row"><span class="k">Date</span><span class="v">'+fmtDateLong(res.d.date)+'</span></div>'+
             '<div class="row"><span class="k">Time</span><span class="v">'+res.d.startLabel+'</span></div>'+
             '<div class="row"><span class="k">Confirmation</span><span class="v">#'+res.d.id.slice(0,8)+'</span></div>';
@@ -327,17 +375,21 @@
         .catch(function(){ btn.disabled=false; btn.innerHTML=orig; msg.textContent="Network error. Please try again."; msg.classList.remove("hide"); });
     });
 
-    el("back2").onclick=function(){show(1)};
+    el("back2").onclick=function(){ if(state.techStepShown){ showTech(); } else { show(1); } };
     el("back3").onclick=function(){show(2)};
     el("back4").onclick=function(){show(3)};
+    el("backTech").onclick=function(){show(1)};
 
-    // ---- boot ----
-    fetch(API+"/api/config").then(function(r){return r.json()}).then(function(d){
-      cfg=d; renderServices();
-      // Deep link: /book/?service=<id> preselects the service and jumps to Date.
+    // ---- boot ---- (load services + technicians together so the tech step is ready)
+    Promise.all([
+      fetch(API+"/api/config").then(function(r){return r.json()}),
+      fetch(API+"/api/technicians").then(function(r){return r.ok?r.json():{technicians:[]}}).catch(function(){return {technicians:[]}})
+    ]).then(function(arr){
+      cfg=arr[0]; techs=(arr[1]&&arr[1].technicians)||[]; renderServices();
+      // Deep link: /book/?service=<id> preselects the service.
       var pre=new URLSearchParams(location.search).get("service");
       var svc=pre?cfg.services.filter(function(s){return s.id===pre;})[0]:null;
-      if(svc){ state.service=svc; el("s2sub").textContent=svc.label+" - "+durLabel(svc.minutes); buildDates(); show(2); }
+      if(svc){ state.service=svc; el("s2sub").textContent=svc.label+" - "+durLabel(svc.minutes); afterService(); }
       else { show(1); }
     }).catch(function(){
       el("app").classList.add("hide"); el("notReady").classList.remove("hide");

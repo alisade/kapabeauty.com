@@ -115,6 +115,7 @@
     function minLabel(m){var h=Math.floor(m/60),mm=m%60,ap=h>=12?"PM":"AM",h12=h%12||12;return h12+":"+String(mm).padStart(2,"0")+" "+ap}
     function fmtDate(ds){var p=ds.split("-").map(Number),d=new Date(Date.UTC(p[0],p[1]-1,p[2]));return DOW[d.getUTCDay()]+", "+MON[d.getUTCMonth()]+" "+d.getUTCDate()}
     function summaryHtml(b){return '<div class="row"><span class="k">Service</span><span class="v">'+esc(b.service_label)+'</span></div>'
+      +(b.technician_name?'<div class="row"><span class="k">Technician</span><span class="v">'+esc(b.technician_name)+'</span></div>':'')
       +'<div class="row"><span class="k">Date</span><span class="v">'+fmtDate(b.date)+'</span></div>'
       +'<div class="row"><span class="k">Time</span><span class="v">'+(b.start_label||minLabel(b.start_min))+'</span></div>'}
     function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
@@ -190,7 +191,7 @@
         .then(function(r){return r.json().then(function(d){return{ok:r.ok,d:d}})})
         .then(function(res){
           if(!res.ok){el("reschedMsg").textContent=res.d.error||"Could not reschedule.";el("reschedMsg").classList.remove("hide");return}
-          var nb={service_label:booking.service_label,date:res.d.date,start_min:res.d.start,start_label:res.d.start_label};
+          var nb={service_label:booking.service_label,technician_name:booking.technician_name,date:res.d.date,start_min:res.d.start,start_label:res.d.start_label};
           el("doneTitle").textContent="Appointment updated";el("doneSub").textContent="Your new appointment time is set. See you then!";
           el("doneSummary").innerHTML=summaryHtml(nb);show("done");
         }).catch(function(){el("reschedMsg").textContent="Network error.";el("reschedMsg").classList.remove("hide")});
