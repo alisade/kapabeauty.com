@@ -100,9 +100,13 @@
 
     <!-- config / sign in -->
     <div class="card cfg" id="cfg">
+      <div class="full" style="text-align:center;padding:4px 0 2px">
+        <a class="btn" id="goLogin" href="/login/" style="text-decoration:none;display:inline-flex">Sign in with your account</a>
+        <div class="muted" style="font-size:12px;margin-top:8px">Recommended. Or use the admin token below (break-glass).</div>
+      </div>
       <div class="field full">
         <label>Booking API URL</label>
-        <input id="apiUrl" placeholder="https://labelle-booking.<subdomain>.workers.dev" autocomplete="off">
+        <input id="apiUrl" placeholder="https://api.labellenailstudio.com" autocomplete="off">
       </div>
       <div class="field full">
         <label>Admin token</label>
@@ -110,7 +114,7 @@
       </div>
       <div class="row full">
         <button class="btn" id="loadBtn">Load bookings</button>
-        <button class="btn ghost" id="signout">Forget token</button>
+        <button class="btn ghost" id="signout">Sign out</button>
         <span class="muted" id="cfgMsg"></span>
       </div>
     </div>
@@ -164,13 +168,18 @@
     var MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     var DOW=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
-    // restore saved creds
-    el("apiUrl").value = localStorage.getItem("lb_api") || DEFAULT_API || "";
+    // Prefer the configured API domain (needed for the same-site session cookie);
+    // fall back to any saved value. Token is only for break-glass ADMIN_TOKEN use.
+    el("apiUrl").value = DEFAULT_API || localStorage.getItem("lb_api") || "";
     el("token").value  = localStorage.getItem("lb_token") || "";
+    var cookieAuth = false; // true once an admin session cookie is confirmed
 
     function api(){ return el("apiUrl").value.trim().replace(/\/+$/,""); }
     function tok(){ return el("token").value.trim(); }
-    function hdr(){ return { "Authorization":"Bearer "+tok() }; }
+    function hdr(){ var t=tok(); return t ? { "Authorization":"Bearer "+t } : {}; }
+    // All admin calls: send the session cookie (credentials) AND a bearer token if present.
+    function authFetch(url, opts){ opts=opts||{}; opts.credentials="include"; opts.headers=Object.assign({}, opts.headers||{}, hdr()); return fetch(url, opts); }
+    function authed(){ return cookieAuth || !!tok(); }
 
     function minLabel(m){ var h=Math.floor(m/60),mm=m%60,ap=h>=12?"PM":"AM",h12=h%12||12; return h12+":"+String(mm).padStart(2,"0")+" "+ap; }
     function durLabel(m){ var h=Math.floor(m/60),mm=m%60; return (h?h+"h ":"")+(mm?mm+"m":"").trim()||m+"m"; }
@@ -179,18 +188,18 @@
     function setMsg(t,err){ var m=el("msg"); m.textContent=t||""; m.className="msg"+(err?" err":""); }
 
     function load(date){
-      if(!api()||!tok()){ el("cfgMsg").textContent="Enter the API URL and admin token."; el("cfgMsg").style.color="var(--err)"; return; }
-      localStorage.setItem("lb_api", api()); localStorage.setItem("lb_token", tok());
+      if(!api()||!authed()){ el("cfgMsg").textContent="Sign in with your account, or paste an admin token."; el("cfgMsg").style.color="var(--err)"; return; }
+      if(tok()){ localStorage.setItem("lb_api", api()); localStorage.setItem("lb_token", tok()); }
       var btn=el("loadBtn"), orig=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spin"></span>';
       setMsg("Loading...");
       var url=api()+"/api/bookings"+(date?("?date="+encodeURIComponent(date)):"");
-      fetch(url,{headers:hdr()}).then(function(r){
-        if(r.status===401){ throw new Error("Unauthorized -- check the admin token."); }
+      authFetch(url).then(function(r){
+        if(r.status===401){ throw new Error("Unauthorized -- sign in again or check the admin token."); }
         if(!r.ok){ throw new Error("Request failed ("+r.status+")."); }
         return r.json();
       }).then(function(d){
         btn.disabled=false; btn.innerHTML=orig;
-        el("cfgMsg").textContent="Connected."; el("cfgMsg").style.color="var(--ok)";
+        el("cfg").classList.add("hide");
         el("tabs").classList.remove("hide");
         el("toolbar").classList.remove("hide");
         render(d.bookings||[], date);
@@ -239,7 +248,7 @@
     function cancel(b, btn){
       if(!confirm("Cancel "+b.service_label+" for "+b.name+" on "+fmtDay(b.date)+" at "+minLabel(b.start_min)+"?")) return;
       btn.disabled=true; btn.innerHTML='<span class="spin" style="border-top-color:var(--err)"></span>';
-      fetch(api()+"/api/cancel",{method:"POST",headers:Object.assign({"Content-Type":"application/json"},hdr()),body:JSON.stringify({id:b.id})})
+      authFetch(api()+"/api/cancel",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:b.id})})
         .then(function(r){ if(!r.ok) throw new Error("Cancel failed"); return r.json(); })
         .then(function(){ load(el("dateFilter").value||undefined); })
         .catch(function(){ btn.disabled=false; btn.textContent="Cancel"; setMsg("Could not cancel. Try again.", true); });
@@ -250,10 +259,10 @@
     // ---- signups (VIP / marketing list) ----
     function fmtWhen(iso){ if(!iso) return ""; var d=new Date(iso); return MON[d.getMonth()]+" "+d.getDate()+", "+d.getFullYear(); }
     function loadSubs(){
-      if(!api()||!tok()){ el("cfgMsg").textContent="Enter the API URL and admin token."; el("cfgMsg").style.color="var(--err)"; return; }
+      if(!api()||!authed()){ el("cfgMsg").textContent="Sign in with your account, or paste an admin token."; el("cfgMsg").style.color="var(--err)"; return; }
       var btn=el("subReload"), orig=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spin" style="border-top-color:var(--muted)"></span>';
       setMsg("Loading signups...");
-      fetch(api()+"/api/subscribers",{headers:hdr()}).then(function(r){
+      authFetch(api()+"/api/subscribers").then(function(r){
         if(r.status===401){ throw new Error("Unauthorized -- check the admin token."); }
         if(!r.ok){ throw new Error("Request failed ("+r.status+")."); }
         return r.json();
@@ -276,9 +285,9 @@
       list.innerHTML=""; list.appendChild(card);
     }
     function downloadCsv(){
-      if(!api()||!tok()) return;
+      if(!api()||!authed()) return;
       var btn=el("subCsv"), orig=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spin" style="border-top-color:var(--muted)"></span>';
-      fetch(api()+"/api/subscribers?format=csv",{headers:hdr()}).then(function(r){ if(!r.ok) throw new Error("failed"); return r.blob(); })
+      authFetch(api()+"/api/subscribers?format=csv").then(function(r){ if(!r.ok) throw new Error("failed"); return r.blob(); })
         .then(function(b){ btn.disabled=false; btn.innerHTML=orig; var u=URL.createObjectURL(b), a=document.createElement("a"); a.href=u; a.download="labelle-signups.csv"; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(u); })
         .catch(function(){ btn.disabled=false; btn.innerHTML=orig; setMsg("Could not download CSV.", true); });
     }
@@ -306,7 +315,7 @@
     function setRowMsg(elm,txt,err){ elm.textContent=txt; elm.className=err?"":"savedok"; elm.style.color=err?"var(--err)":""; }
     function postAdmin(p,payload,btn,msgEl,done){
       var orig=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spin" style="border-top-color:var(--muted)"></span>';
-      fetch(api()+p,{method:"POST",headers:Object.assign({"Content-Type":"application/json"},hdr()),body:JSON.stringify(payload)})
+      authFetch(api()+p,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
         .then(function(r){ return r.json().then(function(d){return {ok:r.ok,d:d}}); })
         .then(function(res){ btn.disabled=false; btn.innerHTML=orig;
           if(!res.ok){ setRowMsg(msgEl,(res.d&&res.d.error)||"Save failed",true); return; }
@@ -314,9 +323,9 @@
         }).catch(function(){ btn.disabled=false; btn.innerHTML=orig; setRowMsg(msgEl,"Network error",true); });
     }
     function loadSetup(){
-      if(!api()||!tok()){ el("cfgMsg").textContent="Enter the API URL and admin token."; el("cfgMsg").style.color="var(--err)"; return; }
+      if(!api()||!authed()){ el("cfgMsg").textContent="Sign in with your account, or paste an admin token."; el("cfgMsg").style.color="var(--err)"; return; }
       setMsg("Loading setup...");
-      fetch(api()+"/api/admin/config",{headers:hdr()}).then(function(r){
+      authFetch(api()+"/api/admin/config").then(function(r){
         if(r.status===401) throw new Error("Unauthorized -- check the admin token.");
         if(!r.ok) throw new Error("Request failed ("+r.status+").");
         return r.json();
@@ -415,9 +424,9 @@
 
     // ---- accounts (T16) ----
     function loadAccounts(){
-      if(!api()||!tok()){ el("cfgMsg").textContent="Enter the API URL and admin token."; el("cfgMsg").style.color="var(--err)"; return; }
+      if(!api()||!authed()){ el("cfgMsg").textContent="Sign in with your account, or paste an admin token."; el("cfgMsg").style.color="var(--err)"; return; }
       setMsg("Loading logins...");
-      fetch(api()+"/api/admin/accounts",{headers:hdr()}).then(function(r){
+      authFetch(api()+"/api/admin/accounts").then(function(r){
         if(r.status===401) throw new Error("Unauthorized -- check the admin token.");
         if(!r.ok) throw new Error("Request failed ("+r.status+").");
         return r.json();
@@ -491,10 +500,24 @@
     el("reload").onclick=function(){ load(el("dateFilter").value||undefined); };
     el("dateFilter").onchange=function(){ load(el("dateFilter").value||undefined); };
     el("upcoming").onclick=function(){ el("dateFilter").value=""; load(); };
-    el("signout").onclick=function(){ localStorage.removeItem("lb_token"); el("token").value=""; el("cfgMsg").textContent="Token forgotten."; el("cfgMsg").style.color="var(--muted)"; };
+    el("signout").onclick=function(){
+      if(cookieAuth){ fetch(api()+"/api/auth/logout",{method:"POST",credentials:"include"}).catch(function(){}); cookieAuth=false; }
+      localStorage.removeItem("lb_token"); el("token").value="";
+      el("cfg").classList.remove("hide"); el("tabs").classList.add("hide");
+      ["toolbar","subToolbar","setupToolbar","acctToolbar"].forEach(function(t){ el(t).classList.add("hide"); });
+      el("list").innerHTML=""; setMsg("");
+      el("cfgMsg").textContent="Signed out."; el("cfgMsg").style.color="var(--muted)";
+    };
 
-    // auto-load if creds already saved
-    if(api() && tok()) load();
+    // On load: if an admin session cookie is present, auto-connect (no token needed).
+    // Otherwise fall back to a saved break-glass token, else wait for sign-in.
+    (function init(){
+      if(!api()){ return; }
+      fetch(api()+"/api/auth/me",{credentials:"include"}).then(function(r){ return r.ok?r.json():null; }).then(function(me){
+        if(me && me.role==="admin"){ cookieAuth=true; load(); }
+        else if(tok()){ load(); }
+      }).catch(function(){ if(tok()) load(); });
+    })();
   })();
   </script>
 </body>

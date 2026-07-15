@@ -96,15 +96,11 @@
     function clr(box){ box.className="msg err hide"; }
     function show(card){ ["loginCard","resetCard","staffCard"].forEach(function(c){ el(c).classList.toggle("hide", c!==card); }); }
 
-    function routeAfterAuth(role, token){
-      if(role==="admin"){
-        // Hand the session token to /admin (it authenticates with Bearer <token>).
-        try{ localStorage.setItem("lb_api", API); localStorage.setItem("lb_token", token); }catch(e){}
-        location.href="/admin/";
-      } else {
-        try{ localStorage.setItem("lb_staff_api", API); localStorage.setItem("lb_staff_token", token); }catch(e){}
-        show("staffCard");
-      }
+    function routeAfterAuth(role){
+      // The session is an HttpOnly cookie set by the API (same-site) -- nothing to
+      // store in JS. /admin detects the cookie via /api/auth/me on load.
+      if(role==="admin"){ location.href="/admin/"; }
+      else { show("staffCard"); }
     }
 
     el("loginForm").addEventListener("submit",function(e){
@@ -112,15 +108,15 @@
       var login=el("login").value.trim(), password=el("password").value;
       if(!login||!password){ err(el("loginMsg"),"Enter your login and password."); return; }
       var btn=el("loginBtn"), o=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spin"></span>';
-      fetch(API+"/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({login:login,password:password})})
+      fetch(API+"/api/auth/login",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({login:login,password:password})})
         .then(function(r){ return r.json().then(function(d){return {ok:r.ok,d:d}}); })
         .then(function(res){
           btn.disabled=false; btn.innerHTML=o;
           if(!res.ok){ err(el("loginMsg"), res.d.error||"Sign in failed."); return; }
-          window.__session={token:res.d.token, role:res.d.role};
+          window.__session={role:res.d.role};
           pendingPassword=password;
           if(res.d.must_reset){ show("resetCard"); }
-          else { routeAfterAuth(res.d.role, res.d.token); }
+          else { routeAfterAuth(res.d.role); }
         })
         .catch(function(){ btn.disabled=false; btn.innerHTML=o; err(el("loginMsg"),"Network error. Please try again."); });
     });
@@ -131,20 +127,18 @@
       if(np.length<8){ err(el("resetMsg"),"New password must be at least 8 characters."); return; }
       if(np!==np2){ err(el("resetMsg"),"Passwords do not match."); return; }
       var btn=el("resetBtn"), o=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spin"></span>';
-      fetch(API+"/api/auth/password",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+window.__session.token},body:JSON.stringify({current:pendingPassword,next:np})})
+      fetch(API+"/api/auth/password",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({current:pendingPassword,next:np})})
         .then(function(r){ return r.json().then(function(d){return {ok:r.ok,d:d}}); })
         .then(function(res){
           btn.disabled=false; btn.innerHTML=o;
           if(!res.ok){ err(el("resetMsg"), res.d.error||"Could not set password."); return; }
-          routeAfterAuth(window.__session.role, window.__session.token);
+          routeAfterAuth(window.__session.role);
         })
         .catch(function(){ btn.disabled=false; btn.innerHTML=o; err(el("resetMsg"),"Network error. Please try again."); });
     });
 
     el("staffOut").onclick=function(){
-      var t=(window.__session&&window.__session.token)||localStorage.getItem("lb_staff_token")||"";
-      if(t) fetch(API+"/api/auth/logout",{method:"POST",headers:{"Authorization":"Bearer "+t}}).catch(function(){});
-      try{ localStorage.removeItem("lb_staff_token"); }catch(e){}
+      fetch(API+"/api/auth/logout",{method:"POST",credentials:"include"}).catch(function(){});
       show("loginCard"); el("password").value="";
     };
   })();

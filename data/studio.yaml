@@ -37,7 +37,9 @@ instagram: "https://www.instagram.com/wearelabelle/"
 #      Leave blank and /book shows a "being set up" message.
 #   2. bookingURL: where every "Book" button points. Keep "/book/".
 # ---------------------------------------------------------------------------
-bookingApiURL: "https://labelle-booking.kapabeautyinc.workers.dev"
+# Custom API domain (same-site with the site -> enables HttpOnly cookie sessions).
+# The old workers.dev URL still works as a fallback.
+bookingApiURL: "https://api.labellenailstudio.com"
 bookingURL: "/book/"
 # Cloudflare Turnstile site key (public) for the booking form's spam check.
 bookingTurnstileSiteKey: "0x4AAAAAADzqFwONGgyuUPgT"
