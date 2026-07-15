@@ -58,6 +58,17 @@
     .bk.cancelled{opacity:.5}
     .pill{display:inline-block;font-size:11px;font-weight:600;color:var(--err);border:1px solid #e3c9c4;border-radius:999px;padding:1px 8px;margin-left:6px}
     .empty{padding:36px 16px;text-align:center;color:var(--muted)}
+    .tabs{display:flex;gap:8px;margin-bottom:14px}
+    .tab-on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+    .sub{display:flex;gap:14px;align-items:center;padding:13px 16px;border-top:1px solid var(--line)}
+    .sub:first-child{border-top:0}
+    .sub .em{flex:1;min-width:0;font-weight:600;font-size:14px;word-break:break-all}
+    .sub .em a{color:var(--accent);text-decoration:none}
+    .sub .nm{color:var(--muted);font-size:13px;font-weight:500}
+    .sub .jn{flex:0 0 auto;color:var(--muted);font-size:12.5px;text-align:right}
+    .sub.unsub{opacity:.5}
+    .badge{display:inline-block;font-size:11px;font-weight:600;border-radius:999px;padding:1px 8px;margin-left:6px}
+    .badge.off{color:var(--err);border:1px solid #e3c9c4}
     .hide{display:none}
     .spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;border-radius:50%;display:inline-block;animation:sp .7s linear infinite;vertical-align:-2px}
     @keyframes sp{to{transform:rotate(360deg)}}
@@ -87,13 +98,26 @@
       </div>
     </div>
 
-    <!-- toolbar (after sign in) -->
+    <!-- tabs (after sign in) -->
+    <div class="tabs hide" id="tabs">
+      <button class="btn ghost tab-on" id="tabBookings">Bookings</button>
+      <button class="btn ghost" id="tabSignups">Signups</button>
+    </div>
+
+    <!-- bookings toolbar -->
     <div class="toolbar hide" id="toolbar">
       <button class="btn ghost" id="reload">Refresh</button>
       <span class="grow"></span>
       <label class="muted" for="dateFilter">View day:</label>
       <input class="field" id="dateFilter" type="date" style="padding:9px 10px;border:1px solid var(--line);border-radius:8px;font:inherit">
       <button class="btn ghost" id="upcoming">Upcoming</button>
+    </div>
+
+    <!-- signups toolbar -->
+    <div class="toolbar hide" id="subToolbar">
+      <button class="btn ghost" id="subReload">Refresh</button>
+      <span class="grow"></span>
+      <button class="btn ghost" id="subCsv">Download CSV</button>
     </div>
 
     <div id="msg" class="msg"></div>
@@ -134,6 +158,7 @@
       }).then(function(d){
         btn.disabled=false; btn.innerHTML=orig;
         el("cfgMsg").textContent="Connected."; el("cfgMsg").style.color="var(--ok)";
+        el("tabs").classList.remove("hide");
         el("toolbar").classList.remove("hide");
         render(d.bookings||[], date);
       }).catch(function(e){
@@ -188,6 +213,56 @@
     }
 
     function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+
+    // ---- signups (VIP / marketing list) ----
+    function fmtWhen(iso){ if(!iso) return ""; var d=new Date(iso); return MON[d.getMonth()]+" "+d.getDate()+", "+d.getFullYear(); }
+    function loadSubs(){
+      if(!api()||!tok()){ el("cfgMsg").textContent="Enter the API URL and admin token."; el("cfgMsg").style.color="var(--err)"; return; }
+      var btn=el("subReload"), orig=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spin" style="border-top-color:var(--muted)"></span>';
+      setMsg("Loading signups...");
+      fetch(api()+"/api/subscribers",{headers:hdr()}).then(function(r){
+        if(r.status===401){ throw new Error("Unauthorized -- check the admin token."); }
+        if(!r.ok){ throw new Error("Request failed ("+r.status+")."); }
+        return r.json();
+      }).then(function(d){ btn.disabled=false; btn.innerHTML=orig; renderSubs(d); })
+        .catch(function(e){ btn.disabled=false; btn.innerHTML=orig; setMsg(e.message||"Could not load signups.", true); el("list").innerHTML=""; });
+    }
+    function renderSubs(d){
+      var subs=(d&&d.subscribers)||[], list=el("list");
+      if(!subs.length){ setMsg(""); list.innerHTML='<div class="card empty">No signups yet.</div>'; return; }
+      setMsg((d.active||0)+" active"+((d.total||0)>(d.active||0)?(" / "+d.total+" total"):"")+" signup"+((d.total||subs.length)===1?"":"s"));
+      var card=document.createElement("div"); card.className="card";
+      subs.forEach(function(s){
+        var row=document.createElement("div"); row.className="sub"+(s.unsub_at?" unsub":"");
+        row.innerHTML=
+          '<div class="em"><a href="mailto:'+esc(s.email)+'">'+esc(s.email)+'</a>'+(s.unsub_at?'<span class="badge off">unsubscribed</span>':'')+
+            (s.name?('<div class="nm">'+esc(s.name)+'</div>'):'')+'</div>'+
+          '<div class="jn">'+fmtWhen(s.created_at)+'</div>';
+        card.appendChild(row);
+      });
+      list.innerHTML=""; list.appendChild(card);
+    }
+    function downloadCsv(){
+      if(!api()||!tok()) return;
+      var btn=el("subCsv"), orig=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spin" style="border-top-color:var(--muted)"></span>';
+      fetch(api()+"/api/subscribers?format=csv",{headers:hdr()}).then(function(r){ if(!r.ok) throw new Error("failed"); return r.blob(); })
+        .then(function(b){ btn.disabled=false; btn.innerHTML=orig; var u=URL.createObjectURL(b), a=document.createElement("a"); a.href=u; a.download="labelle-signups.csv"; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(u); })
+        .catch(function(){ btn.disabled=false; btn.innerHTML=orig; setMsg("Could not download CSV.", true); });
+    }
+    function showTab(which){
+      var bk=which==="bookings";
+      el("tabBookings").classList.toggle("tab-on", bk);
+      el("tabSignups").classList.toggle("tab-on", !bk);
+      el("toolbar").classList.toggle("hide", !bk);
+      el("subToolbar").classList.toggle("hide", bk);
+      el("list").innerHTML=""; setMsg("");
+      if(bk) load(el("dateFilter").value||undefined); else loadSubs();
+    }
+
+    el("tabBookings").onclick=function(){ showTab("bookings"); };
+    el("tabSignups").onclick=function(){ showTab("signups"); };
+    el("subReload").onclick=function(){ loadSubs(); };
+    el("subCsv").onclick=function(){ downloadCsv(); };
 
     el("loadBtn").onclick=function(){ load(el("dateFilter").value||undefined); };
     el("reload").onclick=function(){ load(el("dateFilter").value||undefined); };
