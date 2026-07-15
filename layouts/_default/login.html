@@ -151,7 +151,7 @@
     var CARDS=["loginCard","forgotCard","forgotSent","resetLinkCard","resetCard","staffCard"];
     function show(card){ CARDS.forEach(function(c){ el(c).classList.toggle("hide", c!==card); }); }
 
-    function routeAfterAuth(role){ if(role==="admin"){ location.href="/admin/"; } else { show("staffCard"); } }
+    function routeAfterAuth(role){ location.href = (role==="admin") ? "/admin/" : "/staff/"; }
 
     // If arrived via an emailed reset link, show that flow first.
     if(resetLinkToken){ show("resetLinkCard"); }

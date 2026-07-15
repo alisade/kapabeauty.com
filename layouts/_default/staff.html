@@ -1,0 +1,196 @@
+{{- $s := site.Data.studio -}}
+<!DOCTYPE html>
+<html lang="{{ site.LanguageCode | default "en-us" }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My schedule - {{ $s.name }}</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#f3ede4;--card:#fffdfb;--ink:#2e2823;--muted:#8a7f72;--line:#e7dccd;
+      --accent:#8a6f57;--accent-ink:#fffaf3;--err:#a5463c;--ok:#3f7d5b;--radius:14px;
+      --serif:"Cormorant Garamond",Georgia,serif;--sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--sans);color:var(--ink);background:var(--bg);line-height:1.5;-webkit-font-smoothing:antialiased}
+    .wrap{max-width:620px;margin:0 auto;padding:22px 16px 60px}
+    header.top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px}
+    .title{font-family:var(--serif);font-size:25px;font-weight:600}
+    .title small{display:block;font-family:var(--sans);font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);font-weight:600}
+    .out{color:var(--muted);font-size:13px;text-decoration:none;cursor:pointer}.out:hover{color:var(--ink)}
+    .picker{margin:12px 0}
+    .picker select{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font:inherit;font-size:15px;background:#fff;color:var(--ink)}
+    .controls{display:flex;align-items:center;gap:8px;margin:14px 0 10px}
+    .seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+    .seg button{border:0;background:#fff;color:var(--muted);font:inherit;font-size:13px;font-weight:600;padding:9px 14px;cursor:pointer}
+    .seg button.on{background:var(--accent);color:var(--accent-ink)}
+    .nav{display:flex;align-items:center;gap:6px;margin-left:auto}
+    .nav button{width:34px;height:34px;border:1px solid var(--line);background:#fff;border-radius:9px;cursor:pointer;color:var(--ink);font-size:16px;display:flex;align-items:center;justify-content:center}
+    .nav button:hover{border-color:var(--accent)}
+    .rangelbl{font-weight:600;font-size:14px;min-width:150px;text-align:center}
+    .today{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 12px;font:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+    .glance{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;display:flex;gap:18px;flex-wrap:wrap}
+    .glance .g{}.glance .gv{font-family:var(--serif);font-size:22px;font-weight:600}.glance .gl{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);font-weight:600}
+    .daygroup{margin-bottom:16px}
+    .dayhead{font-family:var(--serif);font-size:18px;font-weight:600;margin:6px 0 8px;display:flex;justify-content:space-between;align-items:baseline}
+    .dayhead .c{font-family:var(--sans);font-size:12px;color:var(--muted);font-weight:600}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 3px 14px rgba(70,55,40,.05);overflow:hidden}
+    .appt{display:flex;gap:14px;padding:14px 16px;border-top:1px solid var(--line)}
+    .appt:first-child{border-top:0}
+    .appt .t{flex:0 0 96px;font-weight:600;font-size:14px}
+    .appt .t .dur{display:block;color:var(--muted);font-size:12px;font-weight:500}
+    .appt .i{flex:1;min-width:0}
+    .appt .svc{font-weight:600;font-size:14.5px}
+    .appt .who{color:var(--muted);font-size:13px;margin-top:2px}.appt .who a{color:var(--accent);text-decoration:none}
+    .appt .notes{color:var(--muted);font-size:12.5px;margin-top:4px;font-style:italic}
+    .off{padding:11px 16px;border-top:1px solid var(--line);color:var(--err);font-size:13px;font-weight:500;background:#fbf4f2}
+    .off:first-child{border-top:0}
+    .empty{padding:34px 16px;text-align:center;color:var(--muted)}
+    .msg{padding:10px 0;font-size:14px}.msg.err{color:var(--err)}
+    .spin{width:20px;height:20px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;display:inline-block;animation:sp .7s linear infinite}
+    @keyframes sp{to{transform:rotate(360deg)}}.center{text-align:center;padding:30px}
+    .hide{display:none}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <div class="title" id="title">My schedule <small id="whoami"></small></div>
+      <a class="out" id="signout">Sign out</a>
+    </header>
+
+    <!-- admin-only technician picker -->
+    <div class="picker hide" id="picker"><select id="techSel"></select></div>
+
+    <div class="controls hide" id="controls">
+      <div class="seg"><button id="segDay" class="on">Day</button><button id="segWeek">Week</button></div>
+      <div class="nav">
+        <button id="prev" aria-label="Previous">&lsaquo;</button>
+        <span class="rangelbl" id="rangeLbl"></span>
+        <button id="next" aria-label="Next">&rsaquo;</button>
+      </div>
+    </div>
+    <div class="controls hide" id="todayRow" style="margin-top:0"><button class="today" id="todayBtn">Today</button></div>
+
+    <div id="glance"></div>
+    <div id="msg" class="msg"></div>
+    <div id="list"><div class="center"><span class="spin"></span></div></div>
+  </div>
+
+  <script>
+  (function(){
+    var API="{{ $s.bookingApiURL }}".replace(/\/+$/,"");
+    var el=function(id){return document.getElementById(id)};
+    var MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    var DOW=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    var me=null, view="day", cursor=null, adminTech="";
+
+    function pad(n){return String(n).padStart(2,"0")}
+    function todayStr(){var d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+    function addDays(ds,n){var p=ds.split("-").map(Number);var d=new Date(Date.UTC(p[0],p[1]-1,p[2])+n*86400000);return d.getUTCFullYear()+"-"+pad(d.getUTCMonth()+1)+"-"+pad(d.getUTCDate())}
+    function dowOf(ds){var p=ds.split("-").map(Number);return new Date(Date.UTC(p[0],p[1]-1,p[2])).getUTCDay()}
+    function fmtDay(ds){var p=ds.split("-").map(Number),d=new Date(Date.UTC(p[0],p[1]-1,p[2]));return DOW[d.getUTCDay()]+", "+MON[d.getUTCMonth()]+" "+d.getUTCDate()}
+    function fmtShort(ds){var p=ds.split("-").map(Number),d=new Date(Date.UTC(p[0],p[1]-1,p[2]));return MON[d.getUTCMonth()]+" "+d.getUTCDate()}
+    function weekStart(ds){ return addDays(ds, -dowOf(ds)); } // Sunday-start week
+    function minLabel(m){var h=Math.floor(m/60),mm=m%60,ap=h>=12?"PM":"AM",h12=h%12||12;return h12+":"+pad(mm)+" "+ap}
+    function durLabel(m){var h=Math.floor(m/60),mm=m%60;return (h?h+"h ":"")+(mm?mm+"m":"").trim()||m+"m"}
+    function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];})}
+
+    function range(){ return view==="day" ? {from:cursor,to:cursor} : {from:weekStart(cursor),to:addDays(weekStart(cursor),6)}; }
+    function rangeLabel(){ if(view==="day") return fmtDay(cursor); var ws=weekStart(cursor); return fmtShort(ws)+" - "+fmtShort(addDays(ws,6)); }
+
+    function load(){
+      var r=range();
+      el("rangeLbl").textContent=rangeLabel();
+      el("list").innerHTML='<div class="center"><span class="spin"></span></div>'; el("glance").innerHTML=""; msg("");
+      var q="from="+r.from+"&to="+r.to+(adminTech?("&technician="+encodeURIComponent(adminTech)):"");
+      fetch(API+"/api/schedule?"+q,{credentials:"include"})
+        .then(function(res){ if(res.status===401){ location.href="/login/"; throw 0; } if(!res.ok) throw new Error("Could not load your schedule."); return res.json(); })
+        .then(function(d){ render(d, r); })
+        .catch(function(e){ if(e) msg(e.message||"Could not load.", true); el("list").innerHTML=""; });
+    }
+    function msg(t,err){ var m=el("msg"); m.textContent=t||""; m.className="msg"+(err?" err":""); }
+
+    function render(d, r){
+      if(d.technician && d.technician.name){ el("whoami").textContent=d.technician.name; }
+      var byDay={}; (d.bookings||[]).forEach(function(b){ (byDay[b.date]=byDay[b.date]||[]).push(b); });
+      var offByDay={}; (d.timeoff||[]).forEach(function(o){ (offByDay[o.date]=offByDay[o.date]||[]).push(o); });
+      // day list for the range
+      var days=[]; for(var ds=r.from; ds<=r.to; ds=addDays(ds,1)) days.push(ds);
+      // glance (day view only)
+      if(view==="day"){
+        var appts=(byDay[cursor]||[]).slice().sort(function(a,b){return a.start_min-b.start_min;});
+        var g="";
+        if(appts.length){
+          g='<div class="g"><div class="gv">'+appts.length+'</div><div class="gl">appointment'+(appts.length>1?"s":"")+'</div></div>'+
+            '<div class="g"><div class="gv">'+minLabel(appts[0].start_min)+'</div><div class="gl">first</div></div>'+
+            '<div class="g"><div class="gv">'+minLabel(appts[appts.length-1].end_min)+'</div><div class="gl">last ends</div></div>';
+        } else { g='<div class="g"><div class="gv">0</div><div class="gl">appointments '+(offByDay[cursor]?"(time off)":"today")+'</div></div>'; }
+        el("glance").innerHTML='<div class="glance">'+g+'</div>';
+      }
+      var list=el("list"); list.innerHTML="";
+      var any=false;
+      days.forEach(function(ds){
+        var appts=(byDay[ds]||[]).slice().sort(function(a,b){return a.start_min-b.start_min;});
+        var offs=offByDay[ds]||[];
+        if(view==="week" && !appts.length && !offs.length) return; // skip empty days in week view
+        any=true;
+        var group=document.createElement("div"); group.className="daygroup";
+        if(view==="week"){ group.innerHTML='<div class="dayhead">'+fmtDay(ds)+'<span class="c">'+appts.length+' appt'+(appts.length===1?"":"s")+'</span></div>'; }
+        var card=document.createElement("div"); card.className="card";
+        offs.forEach(function(o){
+          var when=(o.start_min!=null&&o.end_min!=null)?(minLabel(o.start_min)+" - "+minLabel(o.end_min)):"All day";
+          var div=document.createElement("div"); div.className="off"; div.textContent="Time off - "+when+(o.reason?(" ("+o.reason+")"):"");
+          card.appendChild(div);
+        });
+        appts.forEach(function(b){
+          var phone=(b.phone||"").replace(/[^0-9+]/g,"");
+          var row=document.createElement("div"); row.className="appt";
+          row.innerHTML='<div class="t">'+minLabel(b.start_min)+'<span class="dur">'+durLabel(b.duration_min)+'</span></div>'+
+            '<div class="i"><div class="svc">'+esc(b.service_label)+'</div>'+
+            '<div class="who">'+esc(b.name)+(b.phone?(' &middot; <a href="tel:'+phone+'">'+esc(b.phone)+'</a>'):'')+'</div>'+
+            (b.notes?('<div class="notes">'+esc(b.notes)+'</div>'):'')+'</div>';
+          card.appendChild(row);
+        });
+        if(card.children.length){ group.appendChild(card); list.appendChild(group); }
+      });
+      if(!any){ list.innerHTML='<div class="card"><div class="empty">No appointments '+(view==="day"?"on this day.":"this week.")+'</div></div>'; }
+    }
+
+    // ---- boot: verify session ----
+    fetch(API+"/api/auth/me",{credentials:"include"})
+      .then(function(res){ if(!res.ok) throw 0; return res.json(); })
+      .then(function(m){
+        me=m; cursor=todayStr();
+        el("controls").classList.remove("hide"); el("todayRow").classList.remove("hide");
+        if(m.role==="admin"){
+          el("title").firstChild.textContent="Schedule ";
+          // admin: load technician list to pick from
+          fetch(API+"/api/admin/technicians",{credentials:"include"}).then(function(r){return r.ok?r.json():{technicians:[]}}).then(function(d){
+            var techs=(d.technicians||[]).filter(function(t){return t.active;});
+            if(techs.length){
+              el("picker").classList.remove("hide");
+              el("techSel").innerHTML='<option value="">All technicians</option>'+techs.map(function(t){return '<option value="'+esc(t.id)+'">'+esc(t.name)+'</option>';}).join("");
+              el("techSel").onchange=function(){ adminTech=el("techSel").value; el("whoami").textContent=el("techSel").selectedOptions[0].text!=="All technicians"?el("techSel").selectedOptions[0].text:""; load(); };
+            }
+            load();
+          });
+        } else { load(); }
+      })
+      .catch(function(){ location.href="/login/"; });
+
+    el("segDay").onclick=function(){ view="day"; el("segDay").classList.add("on"); el("segWeek").classList.remove("on"); el("glance").innerHTML=""; load(); };
+    el("segWeek").onclick=function(){ view="week"; el("segWeek").classList.add("on"); el("segDay").classList.remove("on"); el("glance").innerHTML=""; load(); };
+    el("prev").onclick=function(){ cursor=addDays(cursor, view==="day"?-1:-7); load(); };
+    el("next").onclick=function(){ cursor=addDays(cursor, view==="day"?1:7); load(); };
+    el("todayBtn").onclick=function(){ cursor=todayStr(); load(); };
+    el("signout").onclick=function(){ fetch(API+"/api/auth/logout",{method:"POST",credentials:"include"}).catch(function(){}); location.href="/login/"; };
+  })();
+  </script>
+</body>
+</html>
