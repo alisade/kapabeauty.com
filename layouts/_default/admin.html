@@ -36,6 +36,8 @@
     .btn.ghost{background:none;color:var(--muted);border:1px solid var(--line)}
     .btn.danger{background:none;color:var(--err);border:1px solid #e3c9c4;padding:7px 12px;font-size:12.5px;border-radius:8px}
     .btn.danger:hover{background:var(--err);color:#fff;border-color:var(--err)}
+    .btn.sm{padding:7px 12px;font-size:12.5px;border-radius:8px}
+    .rowbtns{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
 
     .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
     .toolbar .grow{flex:1}
@@ -470,7 +472,7 @@
         (a.must_reset?'<span class="badge" style="color:#9a7b25;border:1px solid #e6d9b0">must reset</span>':'')+
         (a.active?'':'<span class="badge off">inactive</span>');
       row.innerHTML='<div class="em">'+esc(a.login)+' '+badges+(a.staff_id?('<div class="nm">staff: '+esc(a.staff_id)+'</div>'):'')+'</div>'+
-        '<div class="rowbtns" style="margin:0"><button class="btn ghost a-reset">Reset</button>'+
+        '<div class="rowbtns" style="margin:0"><button class="btn ghost sm a-reset">Reset</button>'+
         (a.active?'<button class="btn danger a-deact">Deactivate</button>':'')+'<span class="a-rmsg"></span></div>';
       var q=function(sel){return row.querySelector(sel)};
       q(".a-reset").onclick=function(){
