@@ -409,15 +409,6 @@
   </div>
 
   <script>
-  // Point the rating badge at the live Google review link (managed in /admin).
-  (function () {
-    var link = document.getElementById('ratingLink');
-    if (!link) return;
-    var API = "{{ $s.bookingApiURL }}".replace(/\/+$/, "");
-    fetch(API + "/api/config").then(function (r) { return r.json(); }).then(function (d) {
-      if (d && d.googleReviewUrl) link.href = d.googleReviewUrl;
-    }).catch(function () {});
-  })();
   (function () {
     var modal = document.getElementById('bookModal');
     var frame = document.getElementById('bookFrame');
