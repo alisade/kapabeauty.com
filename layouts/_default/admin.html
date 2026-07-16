@@ -442,11 +442,20 @@
       var fields=[["slot_interval_min","Slot interval (min)"],["min_lead_minutes","Min lead time (min)"],["max_advance_days","Max advance (days)"],["cancel_lead_minutes","Self-cancel cutoff (min)"],["reminder_lead_hours","Reminder lead (hours)"],["deposit_default_cents","Default deposit (cents)"],["timezone","Timezone"]];
       var h='<h3 style="font-family:var(--serif);font-size:20px;font-weight:600;margin-bottom:10px">Booking settings</h3><div class="fgrid">';
       fields.forEach(function(f){ h+='<div class="fld"><label>'+f[1]+'</label><input class="st-'+f[0]+'" value="'+esc(set[f[0]]!=null?set[f[0]]:"")+'"></div>'; });
-      h+='</div><div class="rowbtns"><button class="btn st-save">Save settings</button><span class="st-msg"></span></div>';
+      h+='</div>';
+      // Reviews (T10a): post-visit Google review requests.
+      h+='<h3 style="font-family:var(--serif);font-size:20px;font-weight:600;margin:22px 0 10px">Review requests</h3>';
+      h+='<label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:14px"><input type="checkbox" class="st-review_request_enabled"'+(String(set.review_request_enabled)==="1"?" checked":"")+'> Email clients a Google review request after their visit</label>';
+      h+='<div class="fld" style="margin-bottom:10px"><label>Google review link</label><input class="st-google_review_url" placeholder="https://g.page/r/.../review" value="'+esc(set.google_review_url!=null?set.google_review_url:"")+'"></div>';
+      h+='<div class="fgrid"><div class="fld"><label>Ask this many hours after the visit</label><input class="st-review_lead_hours" value="'+esc(set.review_lead_hours!=null?set.review_lead_hours:"")+'"></div></div>';
+      h+='<div class="rowbtns"><button class="btn st-save">Save settings</button><span class="st-msg"></span></div>';
       wrap.innerHTML=h;
       wrap.querySelector(".st-save").onclick=function(){
         var payload={settings:{}};
         fields.forEach(function(f){ payload.settings[f[0]]=wrap.querySelector(".st-"+f[0]).value.trim(); });
+        payload.settings.google_review_url=wrap.querySelector(".st-google_review_url").value.trim();
+        payload.settings.review_lead_hours=wrap.querySelector(".st-review_lead_hours").value.trim();
+        payload.settings.review_request_enabled=wrap.querySelector(".st-review_request_enabled").checked?"1":"0";
         postAdmin("/api/admin/settings",payload,wrap.querySelector(".st-save"),wrap.querySelector(".st-msg"),null);
       };
       return wrap;
