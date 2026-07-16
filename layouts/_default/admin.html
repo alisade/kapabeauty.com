@@ -611,21 +611,30 @@
     }
     function techHoursRow(t, wd){
       var custom=t.hours&&t.hours[wd]; var open=custom?t.hours[wd][0]:null, close=custom?t.hours[wd][1]:null;
-      var closed=custom&&(open==null||close==null);
+      var customClosed=custom&&(open==null||close==null);
       var sh=STUDIOHOURS[wd];
-      var studioLbl=(sh&&sh[0]!=null&&sh[1]!=null)?(minLabel(sh[0])+" - "+minLabel(sh[1])):"Closed";
+      var shOpen=(sh&&sh[0]!=null)?minToTime(sh[0]):"", shClose=(sh&&sh[1]!=null)?minToTime(sh[1]):"", studioClosed=!(sh&&sh[0]!=null&&sh[1]!=null);
+      // Not custom -> show the STUDIO hours, greyed out. Custom -> the tech's own values, editable.
+      var vOpen=custom?(customClosed?"":minToTime(open)):shOpen, vClose=custom?(customClosed?"":minToTime(close)):shClose, vClosed=custom?customClosed:studioClosed;
+      var timeDis=(!custom||vClosed)?' disabled':'';
       var row=document.createElement("div"); row.className="hrow"; row.style.padding="7px 0"; row.style.border="0";
       row.innerHTML='<span style="flex:0 0 42px;font-weight:600;font-size:14px">'+DOWSHORT[wd]+'</span>'+
-        '<label class="cl" style="margin:0;flex:0 0 auto"><input type="checkbox" class="h-custom"'+(custom?' checked':'')+'> Custom hours</label>'+
-        '<span class="h-default muted" style="font-size:13px"'+(custom?' hidden':'')+'>Follows studio hours ('+studioLbl+')</span>'+
-        '<span class="h-fields" style="display:'+(custom?'flex':'none')+';gap:8px;align-items:center">'+
-          '<input type="time" class="h-open" value="'+minToTime(open)+'"'+(closed?' disabled':'')+'><span class="muted">to</span><input type="time" class="h-close" value="'+minToTime(close)+'"'+(closed?' disabled':'')+'>'+
-          '<label class="cl" style="margin:0"><input type="checkbox" class="h-closed"'+(closed?' checked':'')+'> Closed</label>'+
-        '</span>'+
+        '<label class="cl" style="margin:0;flex:0 0 auto"><input type="checkbox" class="h-custom"'+(custom?' checked':'')+'> Custom</label>'+
+        '<input type="time" class="h-open" value="'+vOpen+'"'+timeDis+'><span class="muted">to</span>'+
+        '<input type="time" class="h-close" value="'+vClose+'"'+timeDis+'>'+
+        '<label class="cl" style="margin:0"><input type="checkbox" class="h-closed"'+(vClosed?' checked':'')+(custom?'':' disabled')+'> Closed</label>'+
         '<button class="btn ghost sm h-save" style="margin-left:auto">Save</button><span class="h-msg"></span>';
       var q=function(s){return row.querySelector(s)};
-      function sync(){ var c=q(".h-custom").checked, cl=q(".h-closed").checked; q(".h-default").hidden=c; q(".h-fields").style.display=c?"flex":"none"; q(".h-open").disabled=cl; q(".h-close").disabled=cl; }
-      q(".h-custom").onchange=sync; q(".h-closed").onchange=sync;
+      q(".h-custom").onchange=function(){
+        if(q(".h-custom").checked){
+          q(".h-closed").disabled=false; var cl=q(".h-closed").checked;
+          q(".h-open").disabled=cl; q(".h-close").disabled=cl;
+        } else { // revert to studio hours, greyed out
+          q(".h-open").value=shOpen; q(".h-close").value=shClose; q(".h-closed").checked=studioClosed;
+          q(".h-open").disabled=true; q(".h-close").disabled=true; q(".h-closed").disabled=true;
+        }
+      };
+      q(".h-closed").onchange=function(){ if(q(".h-custom").checked){ var cl=q(".h-closed").checked; q(".h-open").disabled=cl; q(".h-close").disabled=cl; } };
       q(".h-save").onclick=function(){
         if(!q(".h-custom").checked){ postAdmin("/api/admin/technician/hours",{id:t.id,weekday:wd,inherit:true},q(".h-save"),q(".h-msg"),null); return; }
         if(q(".h-closed").checked){ postAdmin("/api/admin/technician/hours",{id:t.id,weekday:wd,closed:true},q(".h-save"),q(".h-msg"),null); return; }
