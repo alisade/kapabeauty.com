@@ -132,6 +132,7 @@
       <button class="btn ghost" id="tabSetup">Setup</button>
       <button class="btn ghost" id="tabAccounts">Techs/Accounts</button>
       <button class="btn ghost" id="tabPromos">Promos</button>
+      <button class="btn ghost" id="tabGifts">Gift Cards</button>
       <span style="flex:1"></span>
       <button class="btn ghost" id="refreshBtn" title="Reload this tab's data from the server">Refresh</button>
     </div>
@@ -161,6 +162,11 @@
     <!-- promos toolbar -->
     <div class="toolbar hide" id="promoToolbar">
       <span class="muted">Discount codes applied at checkout</span>
+    </div>
+
+    <!-- gift cards toolbar -->
+    <div class="toolbar hide" id="giftToolbar">
+      <span class="muted">Sold online at /gift; redeemed at checkout</span>
     </div>
 
     <div id="msg" class="msg"></div>
@@ -333,16 +339,19 @@
       el("tabSetup").classList.toggle("tab-on", which==="setup");
       el("tabAccounts").classList.toggle("tab-on", which==="accounts");
       el("tabPromos").classList.toggle("tab-on", which==="promos");
+      el("tabGifts").classList.toggle("tab-on", which==="gifts");
       el("toolbar").classList.toggle("hide", which!=="bookings");
       el("subToolbar").classList.toggle("hide", which!=="signups");
       el("setupToolbar").classList.toggle("hide", which!=="setup");
       el("acctToolbar").classList.toggle("hide", which!=="accounts");
       el("promoToolbar").classList.toggle("hide", which!=="promos");
+      el("giftToolbar").classList.toggle("hide", which!=="gifts");
       el("list").innerHTML=""; setMsg("");
       if(which==="bookings") load(el("dateFilter").value||undefined);
       else if(which==="signups") loadSubs();
       else if(which==="setup") loadSetup();
       else if(which==="promos") loadPromos();
+      else if(which==="gifts") loadGiftcards();
       else loadAccounts();
     }
 
@@ -544,6 +553,63 @@
       });
     }
 
+    // ---- gift cards (T10c) ----
+    function loadGiftcards(){
+      if(!api()||!authed()){ setMsg("Sign in with your account, or paste an admin token.", true); return; }
+      setMsg("Loading gift cards...");
+      authFetch(api()+"/api/admin/giftcards").then(function(r){
+        if(r.status===401) throw new Error("Unauthorized -- check the admin token.");
+        if(!r.ok) throw new Error("Request failed ("+r.status+").");
+        return r.json();
+      }).then(function(d){ setMsg(""); renderGiftcards(d.giftcards||[]); })
+        .catch(function(e){ setMsg(e.message||"Could not load gift cards.", true); el("list").innerHTML=""; });
+    }
+    function renderGiftcards(cards){
+      var list=el("list"); list.innerHTML="";
+      var form=document.createElement("div"); form.className="card setup-sec"; form.style.padding="16px";
+      form.innerHTML='<h3 style="font-family:var(--serif);font-size:20px;font-weight:600;margin-bottom:4px">Issue a gift card</h3>'+
+        '<p class="muted" style="font-size:12px;margin-bottom:10px">For cards sold in person. Creates an active card and emails the recipient.</p>'+
+        '<div class="fgrid">'+
+        '<div class="fld"><label>Amount ($)</label><input class="g-amt" inputmode="decimal" placeholder="50"></div>'+
+        '<div class="fld"><label>Recipient name</label><input class="g-rname"></div>'+
+        '<div class="fld"><label>Recipient email</label><input class="g-remail" placeholder="them@email.com"></div>'+
+        '<div class="fld"><label>From (name)</label><input class="g-sname"></div>'+
+        '<div class="fld wide"><label>Message (optional)</label><input class="g-msg"></div>'+
+        '</div><div class="rowbtns"><button class="btn g-save">Issue card</button><span class="g-msg2"></span></div>';
+      list.appendChild(form);
+      form.querySelector(".g-save").onclick=function(){
+        var payload={
+          amount_cents: Math.round((parseFloat(form.querySelector(".g-amt").value)||0)*100),
+          recipient_name: form.querySelector(".g-rname").value.trim(),
+          recipient_email: form.querySelector(".g-remail").value.trim(),
+          purchaser_name: form.querySelector(".g-sname").value.trim(),
+          message: form.querySelector(".g-msg").value.trim()
+        };
+        postAdmin("/api/admin/giftcard", payload, form.querySelector(".g-save"), form.querySelector(".g-msg2"), function(){ loadGiftcards(); });
+      };
+      var sec=document.createElement("div"); sec.className="card setup-sec"; sec.style.cssText="padding:16px;margin-top:16px";
+      if(!cards.length){ sec.innerHTML='<p class="muted">No gift cards yet.</p>'; list.appendChild(sec); return; }
+      var h='<h3 style="font-family:var(--serif);font-size:20px;font-weight:600;margin-bottom:10px">Cards</h3>';
+      h+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr style="text-align:left;color:var(--muted)">'+
+         '<th style="padding:6px 8px">Code</th><th>Value</th><th>Balance</th><th>Recipient</th><th>Status</th><th></th></tr></thead><tbody>';
+      cards.forEach(function(g){
+        var st=g.status!=="active"?g.status:(g.active?"active":"inactive");
+        h+='<tr style="border-top:1px solid var(--line)">'+
+           '<td style="padding:8px;font-weight:600">'+esc(g.code)+'</td>'+
+           '<td>'+money(g.initial_cents)+'</td>'+
+           '<td>'+money(g.balance_cents)+'</td>'+
+           '<td>'+esc(g.recipient_email||g.recipient_name||"-")+'</td>'+
+           '<td>'+(st==="active"?'<span style="color:var(--ok)">active</span>':'<span class="muted">'+esc(st)+'</span>')+'</td>'+
+           '<td style="text-align:right">'+((g.status==="active"&&g.active)?'<button class="btn ghost g-del" data-code="'+esc(g.code)+'">Deactivate</button>':'')+'</td>'+
+           '</tr>';
+      });
+      h+='</tbody></table></div>';
+      sec.innerHTML=h; list.appendChild(sec);
+      Array.prototype.forEach.call(sec.querySelectorAll(".g-del"), function(btn){
+        btn.onclick=function(){ postAdmin("/api/admin/giftcard/deactivate",{code:btn.getAttribute("data-code")},btn,btn,function(){ loadGiftcards(); }); };
+      });
+    }
+
     // ---- accounts + technicians (unified) ----
     var ALLSERVICES=[], STUDIOHOURS={}, acctSel=null;
     function loadAccounts(){
@@ -730,12 +796,14 @@
     el("tabSetup").onclick=function(){ showTab("setup"); };
     el("tabAccounts").onclick=function(){ showTab("accounts"); };
     el("tabPromos").onclick=function(){ showTab("promos"); };
+    el("tabGifts").onclick=function(){ showTab("gifts"); };
     el("subCsv").onclick=function(){ downloadCsv(); };
     el("refreshBtn").onclick=function(){
       if(curTab==="bookings") load(el("dateFilter").value||undefined);
       else if(curTab==="signups") loadSubs();
       else if(curTab==="setup") loadSetup();
       else if(curTab==="promos") loadPromos();
+      else if(curTab==="gifts") loadGiftcards();
       else loadAccounts();
     };
 
@@ -746,7 +814,7 @@
       if(cookieAuth){ fetch(api()+"/api/auth/logout",{method:"POST",credentials:"include"}).catch(function(){}); cookieAuth=false; }
       localStorage.removeItem("lb_token"); el("token").value="";
       el("cfg").classList.remove("hide"); el("tabs").classList.add("hide");
-      ["toolbar","subToolbar","setupToolbar","acctToolbar","promoToolbar"].forEach(function(t){ el(t).classList.add("hide"); });
+      ["toolbar","subToolbar","setupToolbar","acctToolbar","promoToolbar","giftToolbar"].forEach(function(t){ el(t).classList.add("hide"); });
       el("list").innerHTML=""; setMsg("");
       el("cfgMsg").textContent="Signed out."; el("cfgMsg").style.color="var(--muted)";
     };

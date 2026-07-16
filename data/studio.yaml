@@ -54,7 +54,7 @@ links:
     icon: "calendar"
     primary: true
   - label: "Gift Card"
-    url: "https://squareup.com/gift"
+    url: "/gift/"
     icon: "gift"
   - label: "Follow on Instagram"
     url: "https://www.instagram.com/wearelabelle/"

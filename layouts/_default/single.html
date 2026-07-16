@@ -188,6 +188,14 @@
             </div>
             <div id="promoMsg" style="font-size:13px;margin-top:6px"></div>
           </div>
+          <div class="field" id="giftField">
+            <label>Gift card (optional)</label>
+            <div style="display:flex;gap:8px">
+              <input id="fGift" autocomplete="off" placeholder="Gift card code" style="flex:1;text-transform:uppercase">
+              <button class="btn btn-ghost" id="giftApply" type="button" style="width:auto;padding:0 16px">Apply</button>
+            </div>
+            <div id="giftMsg" style="font-size:13px;margin-top:6px"></div>
+          </div>
           <!-- honeypot: hidden from humans, bots tend to fill it -->
           <input id="fCompany" name="company" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
           <div id="tsWidget" style="margin-top:2px"></div>
@@ -335,7 +343,9 @@
 
     // ---- step 4: details ----
     function money(c){ c=c||0; return "$"+(c%100===0?(c/100):(c/100).toFixed(2)); }
-    function chargeCents(){ return state.promo ? state.promo.finalCents : (state.service.priceCents||0); }
+    function afterPromoCents(){ return state.promo ? state.promo.finalCents : (state.service.priceCents||0); }
+    function giftAppliedCents(){ return state.gift ? Math.min(state.gift.balance, afterPromoCents()) : 0; }
+    function chargeCents(){ return afterPromoCents() - giftAppliedCents(); }
     function renderDetailsSummary(){
       var paid=(state.service.priceCents||0)>0;
       var isFrom=/^\s*from/i.test(state.service.price||"");
@@ -346,13 +356,13 @@
         '<div class="row"><span class="k">Time</span><span class="v">'+state.slotLabel+'</span></div>'+
         '<div class="row"><span class="k">Duration</span><span class="v">'+durLabel(state.service.minutes)+'</span></div>';
       if(paid){
-        if(state.promo){
-          rows+='<div class="row"><span class="k">Price</span><span class="v">'+money(state.service.priceCents)+'</span></div>'+
-                '<div class="row"><span class="k">Promo '+esc(state.promo.code)+'</span><span class="v">-'+money(state.promo.discountCents)+'</span></div>'+
-                '<div class="row"><span class="k">'+(isFrom?"Prepay now":"Total")+'</span><span class="v">'+money(state.promo.finalCents)+'</span></div>';
-        } else {
-          rows+='<div class="row"><span class="k">'+(isFrom?"Prepay now":"Total")+'</span><span class="v">'+money(state.service.priceCents)+'</span></div>';
+        var ga=giftAppliedCents(), fin=chargeCents(), hasDisc=state.promo||ga>0;
+        if(hasDisc){
+          rows+='<div class="row"><span class="k">Price</span><span class="v">'+money(state.service.priceCents)+'</span></div>';
+          if(state.promo) rows+='<div class="row"><span class="k">Promo '+esc(state.promo.code)+'</span><span class="v">-'+money(state.promo.discountCents)+'</span></div>';
+          if(ga>0) rows+='<div class="row"><span class="k">Gift card</span><span class="v">-'+money(ga)+'</span></div>';
         }
+        rows+='<div class="row"><span class="k">'+(isFrom?"Prepay now":"Total")+'</span><span class="v">'+money(fin)+'</span></div>';
       } else {
         rows+='<div class="row"><span class="k">Price</span><span class="v">'+(state.service.price||"")+'</span></div>';
       }
@@ -363,7 +373,7 @@
         el("payNote").textContent = charge>0 ? (isFrom
           ? ("You'll prepay "+money(charge)+" now (the base price). Any balance is settled in person.")
           : "You'll be taken to a secure Stripe page to pay.")
-          : "Your promo covers the full amount -- no payment needed.";
+          : "This is fully covered -- no payment needed.";
       } else {
         el("confirmBtn").textContent = "Confirm booking";
         el("payNote").textContent = "";
@@ -380,9 +390,12 @@
       show(5);
     }
     function goDetails(){
-      state.promo=null;
+      state.promo=null; state.gift=null;
       el("fPromo").value=""; el("promoMsg").textContent="";
-      el("promoField").style.display=((state.service.priceCents||0)>0)?"":"none";
+      el("fGift").value=""; el("giftMsg").textContent="";
+      var paid=(state.service.priceCents||0)>0;
+      el("promoField").style.display=paid?"":"none";
+      el("giftField").style.display=paid?"":"none";
       renderDetailsSummary();
       show(4);
       renderTurnstile();
@@ -398,6 +411,18 @@
           pm.style.color="var(--ok)"; pm.textContent=d.label+" applied.";
           renderDetailsSummary();
         }).catch(function(){ pm.style.color="var(--err)"; pm.textContent="Could not check that code."; });
+    };
+    el("giftApply").onclick=function(){
+      var code=el("fGift").value.trim(); var gm=el("giftMsg");
+      if(!code){ state.gift=null; gm.textContent=""; renderDetailsSummary(); return; }
+      gm.style.color="var(--muted)"; gm.textContent="Checking...";
+      fetch(API+"/api/giftcard/balance",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:code})})
+        .then(function(r){return r.json()}).then(function(d){
+          if(!d.valid){ state.gift=null; gm.style.color="var(--err)"; gm.textContent=d.error||"That gift card is not valid."; renderDetailsSummary(); return; }
+          state.gift={code:d.code,balance:d.balanceCents};
+          gm.style.color="var(--ok)"; gm.textContent=money(d.balanceCents)+" available.";
+          renderDetailsSummary();
+        }).catch(function(){ gm.style.color="var(--err)"; gm.textContent="Could not check that card."; });
     };
 
     // ---- Turnstile (CAPTCHA) ----
@@ -418,7 +443,8 @@
         name:el("fName").value.trim(), phone:el("fPhone").value.trim(),
         email:el("fEmail").value.trim(), notes:el("fNotes").value.trim(),
         company:el("fCompany").value, turnstileToken:tsToken(),
-        promo_code:(state.promo?state.promo.code:undefined) };
+        promo_code:(state.promo?state.promo.code:undefined),
+        gift_card_code:(state.gift?state.gift.code:undefined) };
       if(!payload.name||!payload.phone){ msg.textContent="Please enter your name and phone."; msg.classList.remove("hide"); return; }
       if(TS_SITEKEY && !payload.turnstileToken){ msg.textContent="Please complete the verification below."; msg.classList.remove("hide"); return; }
       var paid=(state.service.priceCents||0)>0;
