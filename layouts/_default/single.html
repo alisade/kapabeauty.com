@@ -183,6 +183,7 @@
           <!-- honeypot: hidden from humans, bots tend to fill it -->
           <input id="fCompany" name="company" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
           <div id="tsWidget" style="margin-top:2px"></div>
+          <div id="payNote" style="text-align:center;color:var(--muted);font-size:13px;margin:2px 0 10px;line-height:1.5"></div>
           <div id="formMsg" class="msg err hide"></div>
           <button class="btn" id="confirmBtn" type="submit">Confirm booking</button>
           <button class="btn btn-ghost" id="back4" type="button">Back</button>
@@ -194,7 +195,7 @@
       <section id="s5" class="card hide">
         <div class="confirm">
           <div class="tick"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
-          <h2>You're booked!</h2>
+          <h2 id="confHead">You're booked!</h2>
           <p id="confMsg"></p>
           <div class="summary" id="confSummary" style="margin:18px 0 0;text-align:left"></div>
         </div>
@@ -325,14 +326,21 @@
     }
 
     // ---- step 4: details ----
+    function money(c){ c=c||0; return "$"+(c%100===0?(c/100):(c/100).toFixed(2)); }
     function goDetails(){
+      var paid=(state.service.priceCents||0)>0;
+      var isFrom=/^\s*from/i.test(state.service.price||"");
       el("summary").innerHTML=
         '<div class="row"><span class="k">Service</span><span class="v">'+state.service.label+'</span></div>'+
         (state.technicianLabel?'<div class="row"><span class="k">Technician</span><span class="v">'+esc(state.technicianLabel)+'</span></div>':'')+
         '<div class="row"><span class="k">Date</span><span class="v">'+state.dateLabel+'</span></div>'+
         '<div class="row"><span class="k">Time</span><span class="v">'+state.slotLabel+'</span></div>'+
         '<div class="row"><span class="k">Duration</span><span class="v">'+durLabel(state.service.minutes)+'</span></div>'+
-        '<div class="row"><span class="k">Price</span><span class="v">'+(state.service.price||"")+'</span></div>';
+        '<div class="row"><span class="k">'+(paid?(isFrom?"Prepay now":"Total"):"Price")+'</span><span class="v">'+(paid?money(state.service.priceCents):(state.service.price||""))+'</span></div>';
+      el("confirmBtn").textContent = paid ? ("Pay "+money(state.service.priceCents)+" & book") : "Confirm booking";
+      el("payNote").textContent = paid ? (isFrom
+        ? ("You'll prepay "+money(state.service.priceCents)+" now (the base price). Any balance is settled in person.")
+        : "You'll be taken to a secure Stripe page to pay.") : "";
       show(4);
       renderTurnstile();
     }
@@ -357,10 +365,17 @@
         company:el("fCompany").value, turnstileToken:tsToken() };
       if(!payload.name||!payload.phone){ msg.textContent="Please enter your name and phone."; msg.classList.remove("hide"); return; }
       if(TS_SITEKEY && !payload.turnstileToken){ msg.textContent="Please complete the verification below."; msg.classList.remove("hide"); return; }
+      var paid=(state.service.priceCents||0)>0;
       btn.disabled=true; btn.innerHTML='<span class="spin"></span>';
-      fetch(API+"/api/book",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
+      fetch(API+(paid?"/api/checkout":"/api/book"),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
         .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d}})})
         .then(function(res){
+          if(paid){
+            if(!res.ok || !res.d.url){ btn.disabled=false; btn.innerHTML=orig; msg.textContent=res.d.error||"Could not start payment. Please try again."; msg.classList.remove("hide"); tsReset(); return; }
+            // Redirect the TOP window (out of the modal iframe) to Stripe's hosted page.
+            try{ (window.top||window).location.href=res.d.url; }catch(e){ window.location.href=res.d.url; }
+            return;
+          }
           btn.disabled=false; btn.innerHTML=orig;
           if(!res.ok){ msg.textContent=res.d.error||"Something went wrong. Please try again."; msg.classList.remove("hide"); tsReset();
             if(res.d.error && /taken|available/i.test(res.d.error)){ /* slot gone: nudge back to times */ } return; }
@@ -381,14 +396,50 @@
     el("back4").onclick=function(){show(3)};
     el("backTech").onclick=function(){show(1)};
 
+    // ---- return from Stripe Checkout ----
+    function showPaidReturn(sid){
+      el("stepbar").style.display="none"; show(5);
+      el("confHead").textContent="Almost there..."; el("confMsg").textContent="Confirming your booking...";
+      el("confSummary").innerHTML='<div style="text-align:center;padding:10px 0"><span class="spin"></span></div>';
+      var tries=0;
+      (function poll(){
+        fetch(API+"/api/checkout/status?session="+encodeURIComponent(sid)).then(function(r){return r.json()}).then(function(d){
+          if(d.status==="confirmed"){
+            el("confHead").textContent="You're booked!";
+            el("confMsg").textContent="Payment received -- a confirmation is on its way to your email.";
+            el("confSummary").innerHTML=
+              '<div class="row"><span class="k">Service</span><span class="v">'+esc(d.service)+'</span></div>'+
+              (d.technician?'<div class="row"><span class="k">Technician</span><span class="v">'+esc(d.technician)+'</span></div>':'')+
+              '<div class="row"><span class="k">Date</span><span class="v">'+fmtDateLong(d.date)+'</span></div>'+
+              '<div class="row"><span class="k">Time</span><span class="v">'+d.startLabel+'</span></div>'+
+              '<div class="row"><span class="k">Confirmation</span><span class="v">#'+(d.id||"").slice(0,8)+'</span></div>';
+            return;
+          }
+          if(d.status==="cancelled"){ el("confHead").textContent="Booking not completed"; el("confMsg").textContent="We're sorry -- that time was taken and your payment was refunded. Please book another time."; el("confSummary").innerHTML=""; return; }
+          if(tries++ < 10){ setTimeout(poll, 1500); }
+          else { el("confHead").textContent="You're booked!"; el("confMsg").textContent="Payment received -- your booking is being confirmed. Check your email shortly."; el("confSummary").innerHTML=""; }
+        }).catch(function(){ if(tries++ < 10) setTimeout(poll, 1500); });
+      })();
+    }
+    function showCanceledReturn(){
+      el("stepbar").style.display="none"; show(5);
+      el("confHead").textContent="Payment canceled";
+      el("confMsg").textContent="No worries -- your slot was not booked and you were not charged. You can start again anytime.";
+      el("confSummary").innerHTML='<div style="text-align:center;padding:8px 0"><a class="btn" href="/book/" style="text-decoration:none;display:inline-flex">Start over</a></div>';
+    }
+
     // ---- boot ---- (load services + technicians together so the tech step is ready)
+    var qp=new URLSearchParams(location.search);
     Promise.all([
       fetch(API+"/api/config").then(function(r){return r.json()}),
       fetch(API+"/api/technicians").then(function(r){return r.ok?r.json():{technicians:[]}}).catch(function(){return {technicians:[]}})
     ]).then(function(arr){
       cfg=arr[0]; techs=(arr[1]&&arr[1].technicians)||[]; renderServices();
+      // Returning from Stripe Checkout?
+      if(qp.get("paid")){ showPaidReturn(qp.get("paid")); return; }
+      if(qp.get("canceled")){ showCanceledReturn(); return; }
       // Deep link: /book/?service=<id> preselects the service.
-      var pre=new URLSearchParams(location.search).get("service");
+      var pre=qp.get("service");
       var svc=pre?cfg.services.filter(function(s){return s.id===pre;})[0]:null;
       if(svc){ state.service=svc; el("s2sub").textContent=svc.label+" - "+durLabel(svc.minutes); afterService(); }
       else { show(1); }
