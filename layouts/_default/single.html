@@ -446,6 +446,8 @@
         promo_code:(state.promo?state.promo.code:undefined),
         gift_card_code:(state.gift?state.gift.code:undefined) };
       if(!payload.name||!payload.phone){ msg.textContent="Please enter your name and phone."; msg.classList.remove("hide"); return; }
+      if(payload.phone.replace(/\D/g,"").length<10){ msg.textContent="Please enter a valid phone number."; msg.classList.remove("hide"); return; }
+      if(payload.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)){ msg.textContent="Please enter a valid email address."; msg.classList.remove("hide"); return; }
       if(TS_SITEKEY && !payload.turnstileToken){ msg.textContent="Please complete the verification below."; msg.classList.remove("hide"); return; }
       var paid=(state.service.priceCents||0)>0;
       btn.disabled=true; btn.innerHTML='<span class="spin"></span>';
