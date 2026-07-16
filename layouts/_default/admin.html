@@ -130,13 +130,13 @@
       <button class="btn ghost tab-on" id="tabBookings">Bookings</button>
       <button class="btn ghost" id="tabSignups">Signups</button>
       <button class="btn ghost" id="tabSetup">Setup</button>
-      <button class="btn ghost" id="tabAccounts">Accounts</button>
+      <button class="btn ghost" id="tabAccounts">Techs/Accounts</button>
+      <span style="flex:1"></span>
+      <button class="btn ghost" id="refreshBtn" title="Reload this tab's data from the server">Refresh</button>
     </div>
 
     <!-- bookings toolbar -->
     <div class="toolbar hide" id="toolbar">
-      <button class="btn ghost" id="reload">Refresh</button>
-      <span class="grow"></span>
       <label class="muted" for="dateFilter">View day:</label>
       <input class="field" id="dateFilter" type="date" style="padding:9px 10px;border:1px solid var(--line);border-radius:8px;font:inherit">
       <button class="btn ghost" id="upcoming">Upcoming</button>
@@ -144,22 +144,16 @@
 
     <!-- signups toolbar -->
     <div class="toolbar hide" id="subToolbar">
-      <button class="btn ghost" id="subReload">Refresh</button>
-      <span class="grow"></span>
       <button class="btn ghost" id="subCsv">Download CSV</button>
     </div>
 
     <!-- setup toolbar -->
     <div class="toolbar hide" id="setupToolbar">
-      <button class="btn ghost" id="setupReload">Refresh</button>
-      <span class="grow"></span>
       <span class="muted">Changes go live within ~1 minute.</span>
     </div>
 
     <!-- accounts toolbar -->
     <div class="toolbar hide" id="acctToolbar">
-      <button class="btn ghost" id="acctReload">Refresh</button>
-      <span class="grow"></span>
       <span class="muted">Technicians &amp; admins -- logins for /login</span>
     </div>
 
@@ -271,14 +265,13 @@
     function fmtWhen(iso){ if(!iso) return ""; var d=new Date(iso); return MON[d.getMonth()]+" "+d.getDate()+", "+d.getFullYear(); }
     function loadSubs(){
       if(!api()||!authed()){ el("cfgMsg").textContent="Sign in with your account, or paste an admin token."; el("cfgMsg").style.color="var(--err)"; return; }
-      var btn=el("subReload"), orig=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spin" style="border-top-color:var(--muted)"></span>';
       setMsg("Loading signups...");
       authFetch(api()+"/api/subscribers").then(function(r){
         if(r.status===401){ throw new Error("Unauthorized -- check the admin token."); }
         if(!r.ok){ throw new Error("Request failed ("+r.status+")."); }
         return r.json();
-      }).then(function(d){ btn.disabled=false; btn.innerHTML=orig; renderSubs(d); })
-        .catch(function(e){ btn.disabled=false; btn.innerHTML=orig; setMsg(e.message||"Could not load signups.", true); el("list").innerHTML=""; });
+      }).then(function(d){ renderSubs(d); })
+        .catch(function(e){ setMsg(e.message||"Could not load signups.", true); el("list").innerHTML=""; });
     }
     var subSel="__all";
     function renderSubs(d){
@@ -326,7 +319,9 @@
         .then(function(b){ btn.disabled=false; btn.innerHTML=orig; var u=URL.createObjectURL(b), a=document.createElement("a"); a.href=u; a.download=fname; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(u); })
         .catch(function(){ btn.disabled=false; btn.innerHTML=orig; setMsg("Could not download CSV.", true); });
     }
+    var curTab="bookings";
     function showTab(which){
+      curTab=which;
       el("tabBookings").classList.toggle("tab-on", which==="bookings");
       el("tabSignups").classList.toggle("tab-on", which==="signups");
       el("tabSetup").classList.toggle("tab-on", which==="setup");
@@ -642,13 +637,15 @@
     el("tabSignups").onclick=function(){ showTab("signups"); };
     el("tabSetup").onclick=function(){ showTab("setup"); };
     el("tabAccounts").onclick=function(){ showTab("accounts"); };
-    el("subReload").onclick=function(){ loadSubs(); };
     el("subCsv").onclick=function(){ downloadCsv(); };
-    el("setupReload").onclick=function(){ loadSetup(); };
-    el("acctReload").onclick=function(){ loadAccounts(); };
+    el("refreshBtn").onclick=function(){
+      if(curTab==="bookings") load(el("dateFilter").value||undefined);
+      else if(curTab==="signups") loadSubs();
+      else if(curTab==="setup") loadSetup();
+      else loadAccounts();
+    };
 
     el("loadBtn").onclick=function(){ load(el("dateFilter").value||undefined); };
-    el("reload").onclick=function(){ load(el("dateFilter").value||undefined); };
     el("dateFilter").onchange=function(){ load(el("dateFilter").value||undefined); };
     el("upcoming").onclick=function(){ el("dateFilter").value=""; load(); };
     el("signout").onclick=function(){
