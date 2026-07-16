@@ -23,7 +23,7 @@ reviewCount: "1664"
 
 # Contact / location.
 address: "1863 E Thousand Oaks Blvd, Thousand Oaks, CA 91362"
-mapsURL: "https://www.google.com/maps/search/?api=1&query=1863+E+Thousand+Oaks+Blvd+Thousand+Oaks+CA+91362"
+mapsURL: "https://www.google.com/maps?cid=2343347802262225634"
 phone: "(805) 372-9916"
 email: "hello@labellenailstudio.com"
 instagram: "https://www.instagram.com/wearelabelle/"
@@ -63,7 +63,7 @@ links:
     url: "#"
     icon: "briefcase"
   - label: "Get Directions"
-    url: "https://www.google.com/maps/search/?api=1&query=1863+E+Thousand+Oaks+Blvd+Thousand+Oaks+CA+91362"
+    url: "https://www.google.com/maps?cid=2343347802262225634"
     icon: "pin"
 
 # -----------------------------------------------------------------------------
