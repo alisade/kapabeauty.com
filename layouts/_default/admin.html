@@ -236,7 +236,10 @@
           var phone=(b.phone||"").replace(/[^0-9+]/g,"");
           row.innerHTML=
             '<div class="time">'+minLabel(b.start_min)+'<span class="dur">'+durLabel(b.duration_min)+'</span></div>'+
-            '<div class="info"><div class="svc">'+esc(b.service_label)+(b.technician_name?' <span class="muted" style="font-weight:500">with '+esc(b.technician_name)+'</span>':'')+(b.status!=="confirmed"?'<span class="pill">cancelled</span>':'')+'</div>'+
+            '<div class="info"><div class="svc">'+esc(b.service_label)+(b.technician_name?' <span class="muted" style="font-weight:500">with '+esc(b.technician_name)+'</span>':'')+
+              (b.paid?(' <span class="badge" style="color:var(--ok);border:1px solid #bcd7c5">paid '+money(b.amount_cents)+'</span>'):'')+
+              (b.refunded?' <span class="badge" style="color:var(--accent);border:1px solid var(--line)">refunded</span>':'')+
+              (b.status!=="confirmed"?'<span class="pill">cancelled</span>':'')+'</div>'+
             '<div class="who">'+esc(b.name)+' &middot; <a href="tel:'+phone+'">'+esc(b.phone)+'</a>'+(b.email?(' &middot; <a href="mailto:'+esc(b.email)+'">'+esc(b.email)+'</a>'):'')+'</div>'+
             (b.notes?('<div class="notes">'+esc(b.notes)+'</div>'):'')+'</div>'+
             '<div class="actions"></div>';
@@ -245,12 +248,26 @@
             cx.onclick=function(){ cancel(b, cx); };
             row.querySelector(".actions").appendChild(cx);
           }
+          if(b.paid && !b.refunded){
+            var rf=document.createElement("button"); rf.className="btn ghost sm"; rf.textContent="Refund"; rf.style.marginTop="6px";
+            rf.onclick=function(){ refund(b, rf); };
+            row.querySelector(".actions").appendChild(rf);
+          }
           card.appendChild(row);
         });
         wrap.appendChild(card); list.appendChild(wrap);
       });
     }
 
+    function money(c){ c=c||0; return "$"+(c%100===0?(c/100):(c/100).toFixed(2)); }
+    function refund(b, btn){
+      if(!confirm("Refund "+money(b.amount_cents)+" to "+b.name+"? This cannot be undone."))return;
+      var o=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spin" style="border-top-color:var(--muted)"></span>';
+      authFetch(api()+"/api/refund",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:b.id})})
+        .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d}})})
+        .then(function(res){ btn.disabled=false; btn.innerHTML=o; if(!res.ok){ setMsg((res.d&&res.d.error)||"Refund failed.", true); return; } load(el("dateFilter").value||undefined); })
+        .catch(function(){ btn.disabled=false; btn.innerHTML=o; setMsg("Refund failed. Try again.", true); });
+    }
     function cancel(b, btn){
       if(!confirm("Cancel "+b.service_label+" for "+b.name+" on "+fmtDay(b.date)+" at "+minLabel(b.start_min)+"?")) return;
       btn.disabled=true; btn.innerHTML='<span class="spin" style="border-top-color:var(--err)"></span>';

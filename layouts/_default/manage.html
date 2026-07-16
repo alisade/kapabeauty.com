@@ -76,6 +76,7 @@
       <div id="actions">
         <button class="btn" id="rescheduleBtn">Reschedule</button>
         <button class="btn btn-danger" id="cancelBtn">Cancel appointment</button>
+        <p class="msg hide" id="refundNote" style="color:var(--muted);font-size:13px"></p>
       </div>
       <div id="locked" class="hide"><p class="msg">To change this appointment, please call us at {{ $s.phone }}.</p></div>
       <div id="msg" class="msg err hide"></div>
@@ -137,6 +138,13 @@
         el("viewSub").textContent="Hi "+esc(booking.name)+", here are your details.";
         if(booking.canModify){ el("actions").classList.remove("hide"); el("locked").classList.add("hide"); }
         else { el("actions").classList.add("hide"); el("locked").classList.remove("hide"); }
+        // Refund note for paid bookings.
+        if(booking.paid && !booking.refunded){
+          el("refundNote").textContent = booking.refundEligible
+            ? ("Cancelling now refunds your payment in full (cancel "+booking.refundLeadHours+"h+ before to qualify).")
+            : ("Cancellations within "+booking.refundLeadHours+" hours of the appointment are non-refundable online -- call us at {{ $s.phone }} if you need help.");
+          el("refundNote").classList.remove("hide");
+        }
       }
       show("view");
     }
@@ -150,7 +158,7 @@
         .then(function(res){btn.disabled=false;btn.innerHTML=o;
           if(!res.ok){el("msg").textContent=res.d.error||"Could not cancel.";el("msg").classList.remove("hide");return}
           el("doneTitle").textContent="Appointment cancelled";
-          el("doneSub").textContent="We've cancelled your appointment. We hope to see you another time!";
+          el("doneSub").textContent="We've cancelled your appointment."+(res.d.refunded?" Your payment has been refunded in full.":(booking.paid?" Please note your prepayment was non-refundable at this time.":""))+" We hope to see you another time!";
           el("doneSummary").innerHTML=summaryHtml(booking);show("done");
         }).catch(function(){btn.disabled=false;btn.innerHTML=o;el("msg").textContent="Network error.";el("msg").classList.remove("hide")});
     };
