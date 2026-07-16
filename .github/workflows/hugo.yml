@@ -66,6 +66,11 @@ jobs:
             --minify \
             --baseURL "${{ steps.pages.outputs.base_url }}/"
 
+      # Correctness gate: syntax-check inline JS in the built HTML and enforce
+      # ASCII punctuation in layouts/. Fails the build (blocks deploy) on either.
+      - name: Check build (inline JS syntax + ASCII punctuation)
+        run: node scripts/check-build.mjs
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
