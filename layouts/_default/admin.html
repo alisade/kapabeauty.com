@@ -470,7 +470,7 @@
     }
 
     // ---- accounts + technicians (unified) ----
-    var ALLSERVICES=[], acctSel=null;
+    var ALLSERVICES=[], STUDIOHOURS={}, acctSel=null;
     function loadAccounts(){
       if(!api()||!authed()){ el("cfgMsg").textContent="Sign in with your account, or paste an admin token."; el("cfgMsg").style.color="var(--err)"; return; }
       setMsg("Loading...");
@@ -478,7 +478,7 @@
         authFetch(api()+"/api/admin/accounts").then(function(r){ if(r.status===401) throw new Error("Unauthorized -- sign in again or check the admin token."); if(!r.ok) throw new Error("Request failed ("+r.status+")."); return r.json(); }),
         authFetch(api()+"/api/admin/technicians").then(function(r){ return r.ok?r.json():{technicians:[]}; }),
         authFetch(api()+"/api/config").then(function(r){ return r.ok?r.json():{services:[]}; })
-      ]).then(function(res){ setMsg(""); ALLSERVICES=res[2].services||[]; renderAccounts(res[0].accounts||[], res[1].technicians||[]); })
+      ]).then(function(res){ setMsg(""); ALLSERVICES=res[2].services||[]; STUDIOHOURS=res[2].hours||{}; renderAccounts(res[0].accounts||[], res[1].technicians||[]); })
         .catch(function(e){ setMsg(e.message||"Could not load.", true); el("list").innerHTML=""; });
     }
     function renderAccounts(accts, techs){
@@ -589,7 +589,7 @@
           '</div>'+
           '<div class="rowbtns"><button class="btn t-save">Save</button>'+(t.active?'<button class="btn danger t-del">Deactivate</button>':'<button class="btn ghost sm t-react">Reactivate</button>')+loginPart+'<span class="t-msg"></span></div>'+
           '<div style="margin-top:14px"><label style="font-size:12px;font-weight:600;color:var(--muted)">Services performed <span style="font-weight:400">(none checked = all services)</span></label><div class="t-svcs" style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px"></div></div>'+
-          '<div style="margin-top:14px"><label style="font-size:12px;font-weight:600;color:var(--muted)">Working hours <span style="font-weight:400">(unchecked = studio default)</span></label><div class="t-hours"></div></div>'+
+          '<div style="margin-top:14px"><label style="font-size:12px;font-weight:600;color:var(--muted)">Working hours <span style="font-weight:400">(each day follows the studio's hours unless you check "Custom hours")</span></label><div class="t-hours"></div></div>'+
           '<div style="margin-top:14px"><label style="font-size:12px;font-weight:600;color:var(--muted)">Time off <span style="font-weight:400">(block a specific day the technician is out -- vacation, day off; not their weekly hours)</span></label><div class="t-off"></div>'+
             '<div class="hrow" style="border:0;padding:8px 0"><input type="date" class="to-date"><input type="time" class="to-start" title="start (optional)"><input type="time" class="to-end" title="end (optional)"><input class="to-reason" placeholder="reason" style="flex:1;min-width:90px;border:1px solid var(--line);border-radius:8px;padding:8px 9px;font:inherit;font-size:14px"><button class="btn ghost sm to-add">Add</button></div>'+
           '</div>'+
@@ -612,13 +612,19 @@
     function techHoursRow(t, wd){
       var custom=t.hours&&t.hours[wd]; var open=custom?t.hours[wd][0]:null, close=custom?t.hours[wd][1]:null;
       var closed=custom&&(open==null||close==null);
+      var sh=STUDIOHOURS[wd];
+      var studioLbl=(sh&&sh[0]!=null&&sh[1]!=null)?(minLabel(sh[0])+" - "+minLabel(sh[1])):"Closed";
       var row=document.createElement("div"); row.className="hrow"; row.style.padding="7px 0"; row.style.border="0";
-      row.innerHTML='<label class="cl" style="margin:0;flex:0 0 118px"><input type="checkbox" class="h-custom"'+(custom?' checked':'')+'> '+DOWSHORT[wd]+' custom</label>'+
-        '<input type="time" class="h-open" value="'+minToTime(open)+'"'+((!custom||closed)?' disabled':'')+'><span class="muted">to</span><input type="time" class="h-close" value="'+minToTime(close)+'"'+((!custom||closed)?' disabled':'')+'>'+
-        '<label class="cl"><input type="checkbox" class="h-closed"'+(closed?' checked':'')+(custom?'':' disabled')+'> Closed</label>'+
-        '<button class="btn ghost sm h-save">Save</button><span class="h-msg"></span>';
+      row.innerHTML='<span style="flex:0 0 42px;font-weight:600;font-size:14px">'+DOWSHORT[wd]+'</span>'+
+        '<label class="cl" style="margin:0;flex:0 0 auto"><input type="checkbox" class="h-custom"'+(custom?' checked':'')+'> Custom hours</label>'+
+        '<span class="h-default muted" style="font-size:13px"'+(custom?' hidden':'')+'>Follows studio hours ('+studioLbl+')</span>'+
+        '<span class="h-fields" style="display:'+(custom?'flex':'none')+';gap:8px;align-items:center">'+
+          '<input type="time" class="h-open" value="'+minToTime(open)+'"'+(closed?' disabled':'')+'><span class="muted">to</span><input type="time" class="h-close" value="'+minToTime(close)+'"'+(closed?' disabled':'')+'>'+
+          '<label class="cl" style="margin:0"><input type="checkbox" class="h-closed"'+(closed?' checked':'')+'> Closed</label>'+
+        '</span>'+
+        '<button class="btn ghost sm h-save" style="margin-left:auto">Save</button><span class="h-msg"></span>';
       var q=function(s){return row.querySelector(s)};
-      function sync(){ var c=q(".h-custom").checked; var cl=q(".h-closed").checked; q(".h-closed").disabled=!c; q(".h-open").disabled=!c||cl; q(".h-close").disabled=!c||cl; }
+      function sync(){ var c=q(".h-custom").checked, cl=q(".h-closed").checked; q(".h-default").hidden=c; q(".h-fields").style.display=c?"flex":"none"; q(".h-open").disabled=cl; q(".h-close").disabled=cl; }
       q(".h-custom").onchange=sync; q(".h-closed").onchange=sync;
       q(".h-save").onclick=function(){
         if(!q(".h-custom").checked){ postAdmin("/api/admin/technician/hours",{id:t.id,weekday:wd,inherit:true},q(".h-save"),q(".h-msg"),null); return; }
