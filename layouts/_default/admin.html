@@ -131,6 +131,7 @@
       <button class="btn ghost" id="tabSignups">Signups</button>
       <button class="btn ghost" id="tabSetup">Setup</button>
       <button class="btn ghost" id="tabAccounts">Techs/Accounts</button>
+      <button class="btn ghost" id="tabPromos">Promos</button>
       <span style="flex:1"></span>
       <button class="btn ghost" id="refreshBtn" title="Reload this tab's data from the server">Refresh</button>
     </div>
@@ -155,6 +156,11 @@
     <!-- accounts toolbar -->
     <div class="toolbar hide" id="acctToolbar">
       <span class="muted">Technicians &amp; admins -- logins for /login</span>
+    </div>
+
+    <!-- promos toolbar -->
+    <div class="toolbar hide" id="promoToolbar">
+      <span class="muted">Discount codes applied at checkout</span>
     </div>
 
     <div id="msg" class="msg"></div>
@@ -326,14 +332,17 @@
       el("tabSignups").classList.toggle("tab-on", which==="signups");
       el("tabSetup").classList.toggle("tab-on", which==="setup");
       el("tabAccounts").classList.toggle("tab-on", which==="accounts");
+      el("tabPromos").classList.toggle("tab-on", which==="promos");
       el("toolbar").classList.toggle("hide", which!=="bookings");
       el("subToolbar").classList.toggle("hide", which!=="signups");
       el("setupToolbar").classList.toggle("hide", which!=="setup");
       el("acctToolbar").classList.toggle("hide", which!=="accounts");
+      el("promoToolbar").classList.toggle("hide", which!=="promos");
       el("list").innerHTML=""; setMsg("");
       if(which==="bookings") load(el("dateFilter").value||undefined);
       else if(which==="signups") loadSubs();
       else if(which==="setup") loadSetup();
+      else if(which==="promos") loadPromos();
       else loadAccounts();
     }
 
@@ -459,6 +468,68 @@
         postAdmin("/api/admin/settings",payload,wrap.querySelector(".st-save"),wrap.querySelector(".st-msg"),null);
       };
       return wrap;
+    }
+
+    // ---- promo codes (T10b) ----
+    function loadPromos(){
+      if(!api()||!authed()){ setMsg("Sign in with your account, or paste an admin token.", true); return; }
+      setMsg("Loading promos...");
+      authFetch(api()+"/api/admin/promos").then(function(r){
+        if(r.status===401) throw new Error("Unauthorized -- check the admin token.");
+        if(!r.ok) throw new Error("Request failed ("+r.status+").");
+        return r.json();
+      }).then(function(d){ setMsg(""); renderPromos(d.promos||[]); })
+        .catch(function(e){ setMsg(e.message||"Could not load promos.", true); el("list").innerHTML=""; });
+    }
+    function promoValLabel(p){ return p.type==="pct" ? (p.value+"% off") : (money(p.value)+" off"); }
+    function renderPromos(promos){
+      var list=el("list"); list.innerHTML="";
+      var form=document.createElement("div"); form.className="card setup-sec"; form.style.padding="16px";
+      form.innerHTML='<h3 style="font-family:var(--serif);font-size:20px;font-weight:600;margin-bottom:10px">New promo code</h3>'+
+        '<div class="fgrid">'+
+        '<div class="fld"><label>Code</label><input class="p-code" placeholder="WELCOME10" style="text-transform:uppercase"></div>'+
+        '<div class="fld"><label>Type</label><select class="p-type"><option value="pct">% off</option><option value="amount">$ off</option></select></div>'+
+        '<div class="fld"><label>Value (% or dollars)</label><input class="p-value" inputmode="decimal" placeholder="10"></div>'+
+        '<div class="fld"><label>Min service price ($, optional)</label><input class="p-min" inputmode="decimal" placeholder="0"></div>'+
+        '<div class="fld"><label>Max uses (optional)</label><input class="p-max" inputmode="numeric" placeholder="unlimited"></div>'+
+        '<div class="fld"><label>Expires (optional)</label><input class="p-exp" type="date"></div>'+
+        '</div><div class="rowbtns"><button class="btn p-save">Create code</button><span class="p-msg"></span></div>';
+      list.appendChild(form);
+      form.querySelector(".p-save").onclick=function(){
+        var type=form.querySelector(".p-type").value;
+        var valNum=parseFloat(form.querySelector(".p-value").value);
+        var payload={
+          code: form.querySelector(".p-code").value.trim(),
+          type: type,
+          value: type==="amount" ? Math.round((valNum||0)*100) : Math.round(valNum||0),
+          min_amount_cents: Math.round((parseFloat(form.querySelector(".p-min").value)||0)*100),
+          max_uses: form.querySelector(".p-max").value.trim(),
+          expires_at: form.querySelector(".p-exp").value.trim(),
+          active: true
+        };
+        postAdmin("/api/admin/promo", payload, form.querySelector(".p-save"), form.querySelector(".p-msg"), function(){ loadPromos(); });
+      };
+      var sec=document.createElement("div"); sec.className="card setup-sec"; sec.style.cssText="padding:16px;margin-top:16px";
+      if(!promos.length){ sec.innerHTML='<p class="muted">No promo codes yet.</p>'; list.appendChild(sec); return; }
+      var h='<h3 style="font-family:var(--serif);font-size:20px;font-weight:600;margin-bottom:10px">Codes</h3>';
+      h+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr style="text-align:left;color:var(--muted)">'+
+         '<th style="padding:6px 8px">Code</th><th>Discount</th><th>Min</th><th>Used</th><th>Expires</th><th>Status</th><th></th></tr></thead><tbody>';
+      promos.forEach(function(p){
+        h+='<tr style="border-top:1px solid var(--line)">'+
+           '<td style="padding:8px;font-weight:600">'+esc(p.code)+'</td>'+
+           '<td>'+esc(promoValLabel(p))+'</td>'+
+           '<td>'+(p.min_amount_cents?money(p.min_amount_cents):"-")+'</td>'+
+           '<td>'+(p.used_count||0)+(p.max_uses!=null?(" / "+p.max_uses):"")+'</td>'+
+           '<td>'+(p.expires_at?esc(p.expires_at.slice(0,10)):"-")+'</td>'+
+           '<td>'+(p.active?'<span style="color:var(--ok)">active</span>':'<span class="muted">inactive</span>')+'</td>'+
+           '<td style="text-align:right">'+(p.active?'<button class="btn ghost p-del" data-code="'+esc(p.code)+'">Deactivate</button>':'')+'</td>'+
+           '</tr>';
+      });
+      h+='</tbody></table></div>';
+      sec.innerHTML=h; list.appendChild(sec);
+      Array.prototype.forEach.call(sec.querySelectorAll(".p-del"), function(btn){
+        btn.onclick=function(){ postAdmin("/api/admin/promo/delete",{code:btn.getAttribute("data-code")},btn,btn,function(){ loadPromos(); }); };
+      });
     }
 
     // ---- accounts + technicians (unified) ----
@@ -646,11 +717,13 @@
     el("tabSignups").onclick=function(){ showTab("signups"); };
     el("tabSetup").onclick=function(){ showTab("setup"); };
     el("tabAccounts").onclick=function(){ showTab("accounts"); };
+    el("tabPromos").onclick=function(){ showTab("promos"); };
     el("subCsv").onclick=function(){ downloadCsv(); };
     el("refreshBtn").onclick=function(){
       if(curTab==="bookings") load(el("dateFilter").value||undefined);
       else if(curTab==="signups") loadSubs();
       else if(curTab==="setup") loadSetup();
+      else if(curTab==="promos") loadPromos();
       else loadAccounts();
     };
 
@@ -661,7 +734,7 @@
       if(cookieAuth){ fetch(api()+"/api/auth/logout",{method:"POST",credentials:"include"}).catch(function(){}); cookieAuth=false; }
       localStorage.removeItem("lb_token"); el("token").value="";
       el("cfg").classList.remove("hide"); el("tabs").classList.add("hide");
-      ["toolbar","subToolbar","setupToolbar","acctToolbar"].forEach(function(t){ el(t).classList.add("hide"); });
+      ["toolbar","subToolbar","setupToolbar","acctToolbar","promoToolbar"].forEach(function(t){ el(t).classList.add("hide"); });
       el("list").innerHTML=""; setMsg("");
       el("cfgMsg").textContent="Signed out."; el("cfgMsg").style.color="var(--muted)";
     };
