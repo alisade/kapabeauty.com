@@ -298,7 +298,7 @@
       <a class="rating" id="ratingLink" href="{{ $s.mapsURL }}" target="_blank" rel="noopener" title="See our reviews on Google">
         <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
         <strong>{{ $s.rating }}</strong>
-        <span class="count">({{ $s.reviewCount }} reviews)</span>
+        <span class="count">({{ $s.reviewCount }} review{{ if ne $s.reviewCount "1" }}s{{ end }})</span>
       </a>
       {{ end }}
 

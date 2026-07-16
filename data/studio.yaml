@@ -17,9 +17,9 @@ banner: "/images/banner.svg"
 avatar: "/images/logo.svg"
 initials: "LB"
 
-# Rating badge (from your Fresha / Google reviews).
-rating: "4.9"
-reviewCount: "1664"
+# Rating badge (from your Google reviews). Links to the Google listing.
+rating: "5.0"
+reviewCount: "1"
 
 # Contact / location.
 address: "1863 E Thousand Oaks Blvd, Thousand Oaks, CA 91362"
